@@ -1,0 +1,708 @@
+<!--
+  TELLIUM — Prototype visuel V1 (données simulées)
+  Fichier autonome, sans build. Ouvrable directement dans le navigateur / preview Codespaces.
+  Objectif : valider le rendu artistique, les étoiles, les halos de densité,
+  le compteur vivant, l'animation d'arrivée et le format de capture imprimable.
+-->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Tellium — living artwork</title>
+
+<style>
+  :root {
+    --bg-0: #02040a;
+    --bg-1: #060b18;
+    --ink: #e8f0ff;
+    --ink-dim: #7f93bf;
+    --ink-faint: rgba(150, 175, 230, 0.35);
+    --star: #dbe9ff;
+    --halo: 120, 175, 255;      /* rgb pour les halos bleus */
+    --you: #ffc46b;             /* votre étoile, chaude */
+    --friend: #ff77c8;          /* invité */
+    --line: rgba(120, 165, 255, 0.10);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+
+  body {
+    background:
+      radial-gradient(1200px 800px at 50% 38%, #0a1226 0%, var(--bg-1) 42%, var(--bg-0) 100%);
+    color: var(--ink);
+    font-family: ui-sans-serif, -apple-system, "Segoe UI", Inter, Roboto, sans-serif;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  #stage { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; }
+
+  /* ---------- Bandeau supérieur ---------- */
+  .top {
+    position: fixed; top: 0; left: 0; right: 0;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: clamp(16px, 3vw, 34px);
+    pointer-events: none;
+    z-index: 5;
+  }
+  .brand {
+    font-weight: 300;
+    letter-spacing: 0.42em;
+    font-size: clamp(13px, 1.6vw, 17px);
+    text-transform: uppercase;
+    color: var(--ink);
+    text-indent: 0.42em;
+  }
+  .brand small {
+    display: block;
+    margin-top: 6px;
+    letter-spacing: 0.16em;
+    font-size: 10px;
+    color: var(--ink-dim);
+    text-indent: 0.16em;
+  }
+  .clock {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-dim);
+    font-size: clamp(11px, 1.3vw, 13px);
+    letter-spacing: 0.14em;
+    line-height: 1.5;
+  }
+  .clock b { color: var(--ink); font-weight: 500; }
+
+  /* ---------- Bloc central : compteur ---------- */
+  .center {
+    position: fixed; left: 50%; top: clamp(88px, 15vh, 150px);
+    transform: translateX(-50%);
+    text-align: center;
+    pointer-events: none;
+    z-index: 5;
+    width: min(92vw, 760px);
+  }
+  .odometer {
+    display: inline-flex; gap: 2px;
+    font-variant-numeric: tabular-nums;
+    filter: drop-shadow(0 0 24px rgba(120, 175, 255, 0.25));
+  }
+  .digit {
+    position: relative;
+    width: clamp(20px, 3.6vw, 40px);
+    height: clamp(34px, 6vw, 66px);
+    overflow: hidden;
+  }
+  .digit.sep { width: clamp(8px, 1.4vw, 16px); }
+  .strip {
+    position: absolute; top: 0; left: 0; right: 0;
+    transition: transform 620ms cubic-bezier(.22,.61,.16,1);
+    will-change: transform;
+  }
+  .strip span {
+    display: flex; align-items: center; justify-content: center;
+    height: clamp(34px, 6vw, 66px);
+    font-size: clamp(28px, 5vw, 56px);
+    font-weight: 200;
+    letter-spacing: 0;
+    color: #f4f8ff;
+  }
+  .digit.sep .strip span { color: var(--ink-faint); font-weight: 200; }
+
+  .subline {
+    margin-top: 14px;
+    font-size: clamp(11px, 1.4vw, 14px);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    font-variant-numeric: tabular-nums;
+  }
+  .subline b { color: var(--ink); font-weight: 500; }
+  .promise {
+    margin-top: 20px;
+    font-size: clamp(11px, 1.35vw, 14px);
+    letter-spacing: 0.28em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    font-weight: 300;
+  }
+
+  /* ---------- Bandeau inférieur : actions ---------- */
+  .dock {
+    position: fixed; left: 50%; bottom: clamp(20px, 4vh, 40px);
+    transform: translateX(-50%);
+    display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+    z-index: 6;
+    padding: 0 16px;
+  }
+  .btn {
+    appearance: none; cursor: pointer;
+    background: rgba(20, 30, 55, 0.55);
+    border: 1px solid rgba(130, 170, 255, 0.22);
+    color: var(--ink);
+    padding: 12px 20px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    font-weight: 400;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: border-color .25s, background .25s, transform .12s, color .25s;
+  }
+  .btn:hover { border-color: rgba(150, 190, 255, 0.55); background: rgba(30, 44, 78, 0.7); }
+  .btn:active { transform: translateY(1px); }
+  .btn.primary {
+    border-color: rgba(255, 196, 107, 0.5);
+    color: #ffe6bf;
+    background: rgba(60, 42, 16, 0.4);
+  }
+  .btn.primary:hover { border-color: rgba(255, 196, 107, 0.85); background: rgba(80, 56, 20, 0.55); }
+  .btn:focus-visible { outline: 2px solid #9fc0ff; outline-offset: 3px; }
+
+  /* ---------- Infobulle / notifications ---------- */
+  .tip {
+    position: fixed; z-index: 7; pointer-events: none;
+    background: rgba(8, 14, 28, 0.9);
+    border: 1px solid rgba(130, 170, 255, 0.25);
+    padding: 10px 13px; border-radius: 12px;
+    font-size: 12px; letter-spacing: 0.02em; line-height: 1.5;
+    color: var(--ink);
+    transform: translate(-50%, -120%);
+    opacity: 0; transition: opacity .18s;
+    backdrop-filter: blur(8px); max-width: 240px;
+  }
+  .tip .cc { color: var(--ink-dim); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; }
+  .tip b { font-weight: 600; }
+
+  .toasts {
+    position: fixed; left: 50%; bottom: clamp(84px, 12vh, 118px);
+    transform: translateX(-50%);
+    z-index: 6; display: flex; flex-direction: column-reverse; gap: 8px; align-items: center;
+    pointer-events: none; width: min(92vw, 520px);
+  }
+  .toast {
+    background: rgba(10, 16, 32, 0.82);
+    border: 1px solid rgba(130, 170, 255, 0.22);
+    padding: 9px 16px; border-radius: 999px;
+    font-size: 12.5px; letter-spacing: 0.02em; color: var(--ink);
+    backdrop-filter: blur(8px);
+    animation: rise .5s cubic-bezier(.2,.7,.2,1) both;
+    max-width: 100%;
+  }
+  .toast.friend { border-color: rgba(255, 119, 200, 0.5); color: #ffd7ee; }
+  .toast .dim { color: var(--ink-dim); }
+  @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+  .hint {
+    position: fixed; right: clamp(16px, 3vw, 34px); bottom: clamp(20px, 4vh, 40px);
+    color: var(--ink-faint); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase;
+    z-index: 5; pointer-events: none;
+  }
+
+  @media (max-width: 620px) {
+    .brand small { display: none; }
+    .promise { display: none; }
+    .hint { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .strip { transition-duration: 200ms; }
+  }
+</style>
+
+<div id="stage"><canvas id="c"></canvas></div>
+
+<div class="top">
+  <div class="brand">Tellium<small>The first living artwork created by humanity</small></div>
+  <div class="clock">
+    <div id="date">—</div>
+    <div><b id="utc">—</b> UTC</div>
+  </div>
+</div>
+
+<div class="center">
+  <div class="odometer" id="odo" aria-label="people connected now"></div>
+  <div class="subline"><b id="countries">0</b> countries&nbsp;·&nbsp;<b id="cities">0</b> cities represented</div>
+  <div class="promise">people connected now</div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<div class="dock">
+  <button class="btn primary" id="btnInvite">Invite someone to light up the world</button>
+  <button class="btn" id="btnCapture">Capture this moment</button>
+</div>
+
+<div class="hint">Hover a country · click a light</div>
+<div class="tip" id="tip"></div>
+
+<script>
+/* ============================================================================
+   TELLIUM · moteur visuel + couche de données simulée
+   Organisé pour être remplacé par un flux temps réel sans réécrire l'UI :
+   - DATA (getSnapshot / arrivals)   → à brancher plus tard sur Supabase Realtime
+   - ENGINE (render loop)            → indépendant de la source
+   - COUNTER / CAPTURE / INVITE      → consomment DATA
+   ============================================================================ */
+
+/* ---------- 1. Données géographiques (villes réelles) ---------------------- */
+/* lat/lng approximatifs de grandes villes. Ils suffisent à dessiner la Terre
+   habitée : la densité des lumières redessine les continents d'elle-même.     */
+const COUNTRY = {
+  FR:"France", GB:"United Kingdom", DE:"Germany", ES:"Spain", IT:"Italy", NL:"Netherlands",
+  PT:"Portugal", IE:"Ireland", GR:"Greece", SE:"Sweden", NO:"Norway", FI:"Finland",
+  DK:"Denmark", PL:"Poland", UA:"Ukraine", AT:"Austria", RU:"Russia", TR:"Türkiye",
+  US:"United States", CA:"Canada", MX:"Mexico", BR:"Brazil", AR:"Argentina", CL:"Chile",
+  CO:"Colombia", PE:"Peru", VE:"Venezuela", UY:"Uruguay", EC:"Ecuador", PA:"Panama",
+  CU:"Cuba", CN:"China", JP:"Japan", KR:"South Korea", IN:"India", PK:"Pakistan",
+  BD:"Bangladesh", TH:"Thailand", VN:"Vietnam", ID:"Indonesia", MY:"Malaysia",
+  SG:"Singapore", PH:"Philippines", HK:"Hong Kong", TW:"Taiwan", IR:"Iran", IQ:"Iraq",
+  SA:"Saudi Arabia", AE:"UAE", IL:"Israel", EG:"Egypt", NG:"Nigeria", KE:"Kenya",
+  ZA:"South Africa", CD:"DR Congo", MA:"Morocco", DZ:"Algeria", TN:"Tunisia",
+  ET:"Ethiopia", GH:"Ghana", SN:"Senegal", AU:"Australia", NZ:"New Zealand"
+};
+
+// [name, cc, lat, lng, baseWeight]
+const CITY_SEED = [
+  ["Tokyo","JP",35.68,139.69,9],["Delhi","IN",28.61,77.21,8],["Shanghai","CN",31.23,121.47,8],
+  ["São Paulo","BR",-23.55,-46.63,7],["Mexico City","MX",19.43,-99.13,7],["Cairo","EG",30.04,31.24,6],
+  ["Mumbai","IN",19.08,72.88,7],["Beijing","CN",39.90,116.41,7],["Dhaka","BD",23.81,90.41,6],
+  ["Osaka","JP",34.69,135.50,5],["New York","US",40.71,-74.01,8],["Karachi","PK",24.86,67.01,6],
+  ["Buenos Aires","AR",-34.60,-58.38,6],["Istanbul","TR",41.01,28.98,6],["Kolkata","IN",22.57,88.36,6],
+  ["Manila","PH",14.60,120.98,6],["Lagos","NG",6.52,3.38,6],["Rio de Janeiro","BR",-22.91,-43.17,5],
+  ["Los Angeles","US",34.05,-118.24,7],["Moscow","RU",55.75,37.62,6],["Paris","FR",48.85,2.35,7],
+  ["London","GB",51.51,-0.13,7],["Bangkok","TH",13.76,100.50,6],["Jakarta","ID",-6.21,106.85,6],
+  ["Seoul","KR",37.57,126.98,7],["Lima","PE",-12.05,-77.04,5],["Bogotá","CO",4.71,-74.07,5],
+  ["Johannesburg","ZA",-26.20,28.05,5],["Chicago","US",41.88,-87.63,5],["Toronto","CA",43.65,-79.38,5],
+  ["Madrid","ES",40.42,-3.70,5],["Berlin","DE",52.52,13.40,5],["Rome","IT",41.90,12.50,5],
+  ["Sydney","AU",-33.87,151.21,5],["Melbourne","AU",-37.81,144.96,4],["Singapore","SG",1.35,103.82,5],
+  ["Kuala Lumpur","MY",3.14,101.69,4],["Ho Chi Minh City","VN",10.82,106.63,5],["Hong Kong","HK",22.32,114.17,5],
+  ["Tehran","IR",35.69,51.39,5],["Riyadh","SA",24.71,46.68,4],["Baghdad","IQ",33.31,44.36,4],
+  ["Nairobi","KE",-1.29,36.82,4],["Kinshasa","CD",-4.32,15.31,5],["Casablanca","MA",33.57,-7.59,4],
+  ["Tel Aviv","IL",32.08,34.78,4],["Dubai","AE",25.20,55.27,5],["San Francisco","US",37.77,-122.42,5],
+  ["Seattle","US",47.61,-122.33,4],["Miami","US",25.76,-80.19,4],["Houston","US",29.76,-95.37,4],
+  ["Vancouver","CA",49.28,-123.12,4],["Santiago","CL",-33.45,-70.67,4],["Caracas","VE",10.48,-66.90,4],
+  ["Amsterdam","NL",52.37,4.90,4],["Barcelona","ES",41.39,2.17,4],["Milan","IT",45.46,9.19,4],
+  ["Munich","DE",48.14,11.58,4],["Vienna","AT",48.21,16.37,4],["Warsaw","PL",52.23,21.01,4],
+  ["Kyiv","UA",50.45,30.52,4],["Stockholm","SE",59.33,18.06,4],["Oslo","NO",59.91,10.75,3],
+  ["Helsinki","FI",60.17,24.94,3],["Copenhagen","DK",55.68,12.57,3],["Dublin","IE",53.35,-6.26,3],
+  ["Lisbon","PT",38.72,-9.14,3],["Athens","GR",37.98,23.73,3],["Lyon","FR",45.76,4.83,4],
+  ["Marseille","FR",43.30,5.37,3],["Reims","FR",49.26,4.03,2],["Auckland","NZ",-36.85,174.76,3],
+  ["Perth","AU",-31.95,115.86,3],["Chennai","IN",13.08,80.27,5],["Bangalore","IN",12.97,77.59,6],
+  ["Hyderabad","IN",17.38,78.49,5],["Lahore","PK",31.55,74.34,5],["Chengdu","CN",30.57,104.07,5],
+  ["Guangzhou","CN",23.13,113.26,6],["Shenzhen","CN",22.54,114.06,6],["Taipei","TW",25.03,121.56,4],
+  ["Addis Ababa","ET",9.03,38.74,4],["Accra","GH",5.60,-0.19,3],["Dakar","SN",14.72,-17.47,3],
+  ["Algiers","DZ",36.75,3.06,4],["Tunis","TN",36.81,10.18,3],["Montevideo","UY",-34.90,-56.16,3],
+  ["Quito","EC",-0.18,-78.47,3],["Panama City","PA",8.98,-79.52,3],["Havana","CU",23.11,-82.37,3],
+  ["Atlanta","US",33.75,-84.39,4],["Boston","US",42.36,-71.06,4],["Washington","US",38.90,-77.04,4],
+  ["Dallas","US",32.78,-96.80,4],["Denver","US",39.74,-104.99,3],["Phoenix","US",33.45,-112.07,3]
+];
+
+/* ---------- 2. Couche de données (simulée, remplaçable) -------------------- */
+const rnd = (a,b)=>a+Math.random()*(b-a);
+const YOU_CITY = "Lyon"; // votre localisation approximative (IP)
+
+const DataLayer = (() => {
+  // état vivant : chaque ville a un nombre d'utilisateurs actifs qui fluctue
+  const cities = CITY_SEED.map(([name,cc,lat,lng,w],i)=>({
+    id:i, name, cc, lat, lng,
+    users: Math.round(w * rnd(90, 220)),   // ~ centaines/milliers
+    lastArrival: performance.now() - rnd(0, 20000)
+  }));
+
+  let listeners = [];
+  const onArrival = f => listeners.push(f);
+  const emit = a => listeners.forEach(f=>f(a));
+
+  const total = () => cities.reduce((s,c)=>s+c.users,0);
+  const countriesCount = () => new Set(cities.filter(c=>c.users>0).map(c=>c.cc)).size;
+
+  // Simule une arrivée : incrémente une ville et notifie le moteur
+  function spawnArrival(forceCity){
+    const c = forceCity || cities[Math.floor(rnd(0,cities.length))];
+    c.users += 1;
+    c.lastArrival = performance.now();
+    emit({ city:c, ts:c.lastArrival });
+    return c;
+  }
+  // départs discrets pour garder le compteur vivant (ni monotone, ni figé)
+  function tickChurn(){
+    if (Math.random() < 0.35){
+      const c = cities[Math.floor(rnd(0,cities.length))];
+      if (c.users>1) c.users -= 1;
+    }
+  }
+  const cityByName = n => cities.find(c=>c.name===n);
+
+  return { cities, onArrival, spawnArrival, tickChurn, total, countriesCount, cityByName };
+})();
+
+/* ---------- 3. Projection équirectangulaire -------------------------------- */
+// Fenêtre "carte" à l'intérieur du canvas (letterbox 2:1, légèrement resserré)
+function mapRect(W,H){
+  const pad = Math.min(W,H)*0.02;
+  let w = W - pad*2, h = w/2.15;
+  if (h > H - pad*2){ h = H - pad*2; w = h*2.15; }
+  return { x:(W-w)/2, y:(H-h)/2 + h*0.03, w, h };
+}
+function project(lat,lng,r){
+  return { x: r.x + (lng+180)/360 * r.w, y: r.y + (90-lat)/180 * r.h };
+}
+
+/* ---------- 4. Moteur visuel ----------------------------------------------- */
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let DPR=1, W=0, H=0, RECT=null;
+
+// étoiles de fond (champ statique, non liées aux données)
+let bgStars = [];
+// nuage de particules par ville (échantillon dispersé — pas 1 point / user)
+let cloud = []; // {cx,cy, ox,oy, r, phase, speed, cc, cityId}
+const arrivals = []; // animations d'arrivée en cours
+let youStar = null;  // votre étoile persistante
+
+function resize(){
+  DPR = Math.min(window.devicePixelRatio||1, 2);
+  W = canvas.clientWidth; H = canvas.clientHeight;
+  canvas.width = Math.round(W*DPR); canvas.height = Math.round(H*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  RECT = mapRect(W,H);
+  buildScene();
+}
+
+function buildScene(){
+  // fond étoilé
+  bgStars = Array.from({length: Math.round(W*H/9000)}, ()=>({
+    x:Math.random()*W, y:Math.random()*H,
+    r:Math.random()*0.9+0.15, a:Math.random()*0.4+0.05,
+    ph:Math.random()*Math.PI*2, sp:rnd(0.2,0.8)
+  }));
+  // nuage de présence : échantillon dispersé autour de chaque ville
+  cloud = [];
+  const scale = RECT.w/360; // px par degré de longitude
+  for (const c of DataLayer.cities){
+    const p = project(c.lat,c.lng,RECT);
+    // nb de points affichés = compressé (racine) → jamais 1 par utilisateur
+    const n = Math.min(46, Math.max(4, Math.round(Math.sqrt(c.users)*1.4)));
+    const spread = (6 + Math.sqrt(c.users)*0.6) * scale/2.6;
+    for (let i=0;i<n;i++){
+      const ang = Math.random()*Math.PI*2;
+      const rr = Math.pow(Math.random(),0.7)*spread;
+      cloud.push({
+        cx:p.x, cy:p.y,
+        ox:Math.cos(ang)*rr, oy:Math.sin(ang)*rr*0.7,
+        r: rnd(0.5,1.7), phase:Math.random()*Math.PI*2, speed:rnd(0.5,1.8),
+        cc:c.cc, cityId:c.id
+      });
+    }
+  }
+  // votre étoile
+  const you = DataLayer.cityByName(YOU_CITY);
+  if (you){
+    const p = project(you.lat,you.lng,RECT);
+    youStar = { x:p.x, y:p.y, born:performance.now() };
+  }
+}
+
+// halo radial réutilisable
+function halo(x,y,radius,rgb,alpha){
+  const g = ctx.createRadialGradient(x,y,0,x,y,radius);
+  g.addColorStop(0, `rgba(${rgb},${alpha})`);
+  g.addColorStop(0.4, `rgba(${rgb},${alpha*0.35})`);
+  g.addColorStop(1, `rgba(${rgb},0)`);
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(x,y,radius,0,Math.PI*2); ctx.fill();
+}
+
+let hovered = null; // ville survolée
+
+function draw(now){
+  ctx.clearRect(0,0,W,H);
+
+  // fond : léger voile + graticule très discret (géométrie pure, pas de géo inventée)
+  ctx.save();
+  ctx.strokeStyle = 'var(--line)';
+  ctx.strokeStyle = 'rgba(120,165,255,0.055)';
+  ctx.lineWidth = 1;
+  for (let lng=-150; lng<=150; lng+=30){ const p=project(0,lng,RECT); ctx.beginPath(); ctx.moveTo(p.x,RECT.y); ctx.lineTo(p.x,RECT.y+RECT.h); ctx.stroke(); }
+  for (let lat=-60; lat<=60; lat+=30){ const p=project(lat,0,RECT); ctx.beginPath(); ctx.moveTo(RECT.x,p.y); ctx.lineTo(RECT.x+RECT.w,p.y); ctx.stroke(); }
+  ctx.restore();
+
+  // étoiles de fond scintillantes
+  ctx.globalCompositeOperation='lighter';
+  for (const s of bgStars){
+    const tw = 0.6 + 0.4*Math.sin(now*0.001*s.sp + s.ph);
+    ctx.fillStyle = `rgba(200,220,255,${s.a*tw})`;
+    ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fill();
+  }
+
+  // halos de densité par ville
+  for (const c of DataLayer.cities){
+    const p = project(c.lat,c.lng,RECT);
+    const intensity = Math.min(1, 0.25 + Math.sqrt(c.users)/45);
+    const rad = (10 + Math.sqrt(c.users)*1.7) * (RECT.w/1400);
+    halo(p.x, p.y, Math.max(14,rad*2.4), '120,170,255', 0.05*intensity + 0.02);
+    halo(p.x, p.y, Math.max(8,rad),      '150,200,255', 0.10*intensity);
+  }
+
+  // particules de présence (scintillement organique, rythmes désynchronisés)
+  for (const s of cloud){
+    const tw = 0.45 + 0.55*Math.abs(Math.sin(now*0.001*s.speed + s.phase));
+    const x=s.cx+s.ox, y=s.cy+s.oy;
+    ctx.fillStyle = `rgba(219,233,255,${0.55*tw})`;
+    ctx.beginPath(); ctx.arc(x,y,s.r*(0.8+0.5*tw),0,Math.PI*2); ctx.fill();
+  }
+
+  // votre étoile — plus chaude, halo pulsé, toujours identifiable
+  if (youStar){
+    const pulse = 0.6+0.4*Math.sin(now*0.004);
+    halo(youStar.x, youStar.y, 34*(0.9+0.3*pulse), '255,196,107', 0.16*pulse+0.06);
+    ctx.fillStyle = '#fff2d8';
+    ctx.beginPath(); ctx.arc(youStar.x, youStar.y, 2.6+pulse, 0, Math.PI*2); ctx.fill();
+  }
+
+  // animations d'arrivée (étoile filante → pose → pulsation)
+  for (let i=arrivals.length-1;i>=0;i--){
+    const a = arrivals[i];
+    const t = (now - a.start)/a.dur;
+    if (t>=1 && t> a.holdT){ arrivals.splice(i,1); continue; }
+    if (t<1){
+      // trajectoire filante
+      const e = 1-Math.pow(1-t,3);
+      const x = a.fromX + (a.x-a.fromX)*e;
+      const y = a.fromY + (a.y-a.fromY)*e;
+      const col = a.friend ? '255,119,200' : '255,255,255';
+      // traînée
+      ctx.strokeStyle = `rgba(${col},${0.5*(1-t)})`;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(x,y); ctx.lineTo(x-(a.x-a.fromX)*0.05, y-(a.y-a.fromY)*0.05); ctx.stroke();
+      halo(x,y,16,col,0.5*(1-t)+0.2);
+      ctx.fillStyle=`rgba(255,255,255,0.95)`;
+      ctx.beginPath(); ctx.arc(x,y,2.2,0,Math.PI*2); ctx.fill();
+    } else {
+      // pose : pulsation qui s'atténue
+      const ht=(t-1)/(a.holdT-1);
+      const col = a.friend ? '255,119,200' : '150,205,255';
+      const pr = (1-ht);
+      halo(a.x,a.y, 26*pr+8, col, 0.4*pr+0.05);
+      // ligne d'invitation entre vous et l'invité
+      if (a.friend && youStar){
+        ctx.strokeStyle=`rgba(255,150,215,${0.5*pr})`;
+        ctx.lineWidth=1.2;
+        ctx.beginPath();
+        ctx.moveTo(youStar.x,youStar.y);
+        const mx=(youStar.x+a.x)/2, my=Math.min(youStar.y,a.y)-40;
+        ctx.quadraticCurveTo(mx,my,a.x,a.y); ctx.stroke();
+      }
+    }
+  }
+  ctx.globalCompositeOperation='source-over';
+
+  // surbrillance survol
+  if (hovered){
+    const p=project(hovered.lat,hovered.lng,RECT);
+    ctx.strokeStyle='rgba(180,210,255,0.5)';
+    ctx.lineWidth=1;
+    ctx.beginPath(); ctx.arc(p.x,p.y,16,0,Math.PI*2); ctx.stroke();
+  }
+
+  requestAnimationFrame(draw);
+}
+
+function pushArrival(city, friend=false){
+  const p = project(city.lat, city.lng, RECT);
+  const edge = Math.random()<0.5 ? -60 : W+60;
+  arrivals.push({
+    x:p.x, y:p.y,
+    fromX: edge, fromY: rnd(RECT.y, RECT.y+RECT.h*0.4),
+    start: performance.now(), dur: rnd(650,950),
+    holdT: 3.2, friend
+  });
+}
+
+/* ---------- 5. Compteur vivant (odomètre) ---------------------------------- */
+const odo = document.getElementById('odo');
+let shown = DataLayer.total();
+let target = shown;
+function buildOdometer(n){
+  const s = String(Math.max(0,Math.round(n))).padStart(7,'0');
+  const grouped = s.replace(/\B(?=(\d{3})+(?!\d))/g,' ');
+  odo.innerHTML='';
+  for (const ch of grouped){
+    const d=document.createElement('div');
+    if (ch===' '){ d.className='digit sep'; d.innerHTML='<div class="strip"><span>·</span></div>'; }
+    else {
+      d.className='digit';
+      const strip=document.createElement('div'); strip.className='strip';
+      for (let k=0;k<10;k++){ const sp=document.createElement('span'); sp.textContent=k; strip.appendChild(sp); }
+      strip.style.transform=`translateY(-${(+ch)*10}%)`;
+      d.appendChild(strip);
+    }
+    odo.appendChild(d);
+  }
+}
+function refreshOdometer(n){
+  const s=String(Math.max(0,Math.round(n))).padStart(7,'0');
+  const strips=odo.querySelectorAll('.digit:not(.sep) .strip');
+  // digits correspond aux positions non-séparateur, dans l'ordre
+  let di=0;
+  for (const ch of s){ const st=strips[di++]; if(st) st.style.transform=`translateY(-${(+ch)*10}%)`; }
+}
+buildOdometer(shown);
+
+const elCountries=document.getElementById('countries');
+const elCities=document.getElementById('cities');
+const activeCities=()=>DataLayer.cities.filter(c=>c.users>0).length;
+
+/* ---------- 6. Horloge UTC -------------------------------------------------- */
+function tickClock(){
+  const d=new Date();
+  const p=x=>String(x).padStart(2,'0');
+  document.getElementById('utc').textContent=`${p(d.getUTCHours())}:${p(d.getUTCMinutes())}:${p(d.getUTCSeconds())}`;
+  document.getElementById('date').textContent=d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'});
+}
+setInterval(tickClock,1000); tickClock();
+
+/* ---------- 7. Boucle de simulation temps réel ----------------------------- */
+DataLayer.onArrival(({city,friend})=>{ pushArrival(city, !!friend); });
+
+// arrivées régulières (rafale variable pour un compteur non-monotone)
+function loopArrivals(){
+  const burst = Math.random()<0.15 ? Math.floor(rnd(2,6)) : 1;
+  for (let i=0;i<burst;i++) setTimeout(()=>DataLayer.spawnArrival(), i*90);
+  DataLayer.tickChurn();
+  target = DataLayer.total();
+  elCountries.textContent = DataLayer.countriesCount();
+  elCities.textContent = activeCities();
+  setTimeout(loopArrivals, rnd(500,1400));
+}
+
+// interpolation douce du compteur affiché → cible
+function counterTick(){
+  if (Math.abs(target-shown)>0.5){
+    shown += (target-shown)*0.18 + Math.sign(target-shown)*0.4;
+    refreshOdometer(shown);
+  }
+  requestAnimationFrame(counterTick);
+}
+
+/* ---------- 8. Interactions : survol / clic -------------------------------- */
+const tip=document.getElementById('tip');
+function nearestCity(mx,my){
+  let best=null,bd=1e9;
+  for (const c of DataLayer.cities){
+    const p=project(c.lat,c.lng,RECT);
+    const d=(p.x-mx)**2+(p.y-my)**2;
+    if (d<bd){bd=d;best=c;}
+  }
+  return bd<26*26 ? best : null;
+}
+function since(ts){ const s=Math.max(1,Math.round((performance.now()-ts)/1000)); return s<60?`${s}s ago`:`${Math.round(s/60)}m ago`; }
+
+canvas.addEventListener('mousemove',e=>{
+  const r=canvas.getBoundingClientRect();
+  const mx=e.clientX-r.left, my=e.clientY-r.top;
+  const c=nearestCity(mx,my);
+  hovered=c;
+  if (c){
+    tip.style.left=e.clientX+'px'; tip.style.top=e.clientY+'px'; tip.style.opacity='1';
+    tip.innerHTML=`<div class="cc">${COUNTRY[c.cc]||c.cc}</div>
+      <b>${c.users.toLocaleString('en-US')}</b> people connected<br>
+      ${c.name} · last arrival ${since(c.lastArrival)}`;
+    canvas.style.cursor='pointer';
+  } else { tip.style.opacity='0'; canvas.style.cursor='default'; }
+});
+canvas.addEventListener('mouseleave',()=>{ tip.style.opacity='0'; hovered=null; });
+canvas.addEventListener('click',e=>{
+  const r=canvas.getBoundingClientRect();
+  const c=nearestCity(e.clientX-r.left,e.clientY-r.top);
+  if (c) toast(`Someone joined from <b>${c.name}, ${COUNTRY[c.cc]||c.cc}</b> <span class="dim">· ${since(c.lastArrival)}</span>`);
+});
+
+/* ---------- 9. Notifications ------------------------------------------------ */
+const toastsEl=document.getElementById('toasts');
+function toast(html, friend=false){
+  const t=document.createElement('div');
+  t.className='toast'+(friend?' friend':''); t.innerHTML=html;
+  toastsEl.appendChild(t);
+  setTimeout(()=>{ t.style.transition='opacity .5s'; t.style.opacity='0'; setTimeout(()=>t.remove(),500); }, 4200);
+  while (toastsEl.children.length>3) toastsEl.firstChild.remove();
+}
+
+/* ---------- 10. Invitation (boucle virale, démo) --------------------------- */
+document.getElementById('btnInvite').addEventListener('click',()=>{
+  // en V1 réelle : génère https://tellium.world/join/<id> et copie le lien
+  const pool=DataLayer.cities.filter(c=>c.name!==YOU_CITY);
+  const friend=pool[Math.floor(rnd(0,pool.length))];
+  friend.users+=1; friend.lastArrival=performance.now();
+  target=DataLayer.total();
+  pushArrival(friend,true);
+  toast(`Someone you invited just joined from <b>${friend.name}, ${COUNTRY[friend.cc]||friend.cc}</b>`, true);
+});
+
+/* ---------- 11. Capture d'un instant (image imprimable) -------------------- */
+document.getElementById('btnCapture').addEventListener('click',()=>{
+  const scale=2, ow=1600*scale, oh=Math.round(ow*0.62);
+  const o=document.createElement('canvas'); o.width=ow; o.height=oh;
+  const g=o.getContext('2d');
+  // fond
+  const bg=g.createRadialGradient(ow/2,oh*0.4,0,ow/2,oh*0.4,ow*0.7);
+  bg.addColorStop(0,'#0a1226'); bg.addColorStop(0.5,'#060b18'); bg.addColorStop(1,'#02040a');
+  g.fillStyle=bg; g.fillRect(0,0,ow,oh);
+  // carte : reprojection sur le canvas d'export
+  const r={x:ow*0.05,y:oh*0.16,w:ow*0.9,h:ow*0.9/2.15};
+  const proj=(lat,lng)=>({x:r.x+(lng+180)/360*r.w, y:r.y+(90-lat)/180*r.h});
+  g.globalCompositeOperation='lighter';
+  for (const c of DataLayer.cities){
+    const p=proj(c.lat,c.lng);
+    const rad=(20+Math.sqrt(c.users)*3)*(ow/1600);
+    const grd=g.createRadialGradient(p.x,p.y,0,p.x,p.y,rad*2.4);
+    const inten=Math.min(1,0.3+Math.sqrt(c.users)/45);
+    grd.addColorStop(0,`rgba(150,200,255,${0.14*inten})`); grd.addColorStop(1,'rgba(150,200,255,0)');
+    g.fillStyle=grd; g.beginPath(); g.arc(p.x,p.y,rad*2.4,0,Math.PI*2); g.fill();
+    for (const s of cloud.filter(s=>s.cityId===c.id)){
+      g.fillStyle='rgba(219,233,255,0.8)';
+      g.beginPath(); g.arc(proj(c.lat,c.lng).x+s.ox*(ow/W)*0.7, proj(c.lat,c.lng).y+s.oy*(ow/W)*0.7, 1.6, 0, Math.PI*2); g.fill();
+    }
+  }
+  const you=DataLayer.cityByName(YOU_CITY);
+  if (you){ const p=proj(you.lat,you.lng);
+    const grd=g.createRadialGradient(p.x,p.y,0,p.x,p.y,60);
+    grd.addColorStop(0,'rgba(255,196,107,0.5)'); grd.addColorStop(1,'rgba(255,196,107,0)');
+    g.fillStyle=grd; g.beginPath(); g.arc(p.x,p.y,60,0,Math.PI*2); g.fill();
+    g.fillStyle='#fff2d8'; g.beginPath(); g.arc(p.x,p.y,4,0,Math.PI*2); g.fill();
+  }
+  g.globalCompositeOperation='source-over';
+  // texte
+  const d=new Date(), p2=x=>String(x).padStart(2,'0');
+  const stamp=`${d.getUTCFullYear()}${p2(d.getUTCMonth()+1)}${p2(d.getUTCDate())}-${p2(d.getUTCHours())}${p2(d.getUTCMinutes())}${p2(d.getUTCSeconds())}`;
+  g.fillStyle='#e8f0ff'; g.textAlign='center';
+  g.font=`300 ${ow*0.028}px ui-sans-serif,system-ui`;
+  g.textAlign='left';
+  g.fillText('T E L L I U M', r.x, oh*0.10);
+  g.textAlign='right';
+  g.font=`300 ${ow*0.014}px ui-sans-serif`; g.fillStyle='#7f93bf';
+  g.fillText(`${d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'})}  ·  ${p2(d.getUTCHours())}:${p2(d.getUTCMinutes())}:${p2(d.getUTCSeconds())} UTC`, r.x+r.w, oh*0.10);
+  g.textAlign='center'; g.fillStyle='#f4f8ff';
+  g.font=`200 ${ow*0.03}px ui-sans-serif`;
+  g.fillText(`${DataLayer.total().toLocaleString('en-US')} people connected`, ow/2, oh*0.92);
+  g.font=`300 ${ow*0.013}px ui-sans-serif`; g.fillStyle='#7f93bf';
+  g.fillText(`${DataLayer.countriesCount()} countries represented   ·   Moment #${stamp}`, ow/2, oh*0.96);
+
+  const a=document.createElement('a');
+  a.download=`tellium-moment-${stamp}.png`; a.href=o.toDataURL('image/png'); a.click();
+  toast(`Moment <b>#${stamp}</b> captured`);
+});
+
+/* ---------- 12. Démarrage --------------------------------------------------- */
+window.addEventListener('resize', resize);
+resize();
+requestAnimationFrame(draw);
+requestAnimationFrame(counterTick);
+loopArrivals();
+
+// séquence d'accueil : VOTRE arrivée depuis Lyon
+setTimeout(()=>{
+  const you=DataLayer.cityByName(YOU_CITY);
+  if (you){ pushArrival(you,false); toast(`Your light appeared from <b>${YOU_CITY}, France</b>`); }
+}, 700);
+</script>
