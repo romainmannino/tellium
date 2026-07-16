@@ -1,10 +1,9 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { SimulatedSource } from "@/lib/data/simulatedSource";
+import { SupabasePresenceSource } from "@/lib/data/supabasePresenceSource";
 import type { PresenceSource } from "@/lib/data/presenceSource";
 import { TelliumRenderer, type HoverInfo } from "@/lib/engine/renderer";
 import { downloadPng } from "@/lib/capture/capture";
-import { createSession, startHeartbeat } from "@/lib/presence/session";
 import { createInvitation, shareInvitation } from "@/lib/invitations/invitations";
 import { SELF_CITY } from "@/lib/data/cities";
 import LedCounter from "./LedCounter";
@@ -43,14 +42,11 @@ export default function TelliumExperience() {
   const [scene, setScene] = useState<Scene>("home");
   const [inviteDialog, setInviteDialog] = useState<InviteDialog>(null);
   const [captureDialog, setCaptureDialog] = useState<CaptureDialog>(null);
-  const [labOpen, setLabOpen] = useState(false);
-  const [simulationValue, setSimulationValue] = useState(214);
   const [homeArrivalPulse, setHomeArrivalPulse] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [profile, setProfile] = useState<LightProfile>({ firstName: "" });
   const [profileDraft, setProfileDraft] = useState("");
-  const [tickerItems, setTickerItems] = useState<string[]>(["A new light · Tokyo", "Sofia · Madrid", "Mike · Montréal"]);
-  const simulationCenterRef = useRef(214);
+  const [tickerItems, setTickerItems] = useState<string[]>([]);
 
   const arrivedAtRef = useRef<number>(0);
   const invitesRef = useRef<number>(0);
@@ -63,11 +59,10 @@ export default function TelliumExperience() {
   };
 
   useEffect(() => {
-    const source = new SimulatedSource();
+    const source = new SupabasePresenceSource();
     const engine = new TelliumRenderer();
     sourceRef.current = source;
     engineRef.current = engine;
-    source.setTargetTotal(214);
     engine.setMode("globe");
 
     engine.mount(canvasRef.current!, source, {
@@ -78,8 +73,6 @@ export default function TelliumExperience() {
     });
     source.start();
 
-    const session = createSession(SELF_CITY, "FR");
-    const stopHeartbeat = startHeartbeat(session);
 
     const tickClock = () => {
       const d = new Date();
@@ -103,7 +96,6 @@ export default function TelliumExperience() {
     return () => {
       window.clearTimeout(welcome);
       window.clearInterval(clockId);
-      stopHeartbeat();
       source.stop();
       engine.destroy();
     };
@@ -133,7 +125,6 @@ export default function TelliumExperience() {
   const onInvite = async () => {
     const inv = createInvitation("self");
     const result = await shareInvitation(inv.url);
-    sourceRef.current?.inviteJoin();
     invitesRef.current += 1;
     setInvitesSent(invitesRef.current);
 
@@ -315,6 +306,9 @@ export default function TelliumExperience() {
   const saveProfile = () => {
     const firstName = profileDraft.trim().slice(0, 24);
     setProfile({ firstName });
+    if (sourceRef.current instanceof SupabasePresenceSource) {
+      sourceRef.current.updateProfile(firstName);
+    }
     if (firstName) {
       setTickerItems((items) => [`${firstName} · ${SELF_CITY}`, ...items].slice(0, 12));
       pushToast(`${firstName}, your light is ready`);
@@ -324,51 +318,12 @@ export default function TelliumExperience() {
 
   const continueAnonymous = () => {
     setProfile({ firstName: "" });
+    if (sourceRef.current instanceof SupabasePresenceSource) {
+      sourceRef.current.updateProfile("");
+    }
     setTickerItems((items) => [`A new light · ${SELF_CITY}`, ...items].slice(0, 12));
     startRevealArtwork();
   };
-
-  const setSimulationTotal = (value: number) => {
-    const next = Math.max(1, Math.round(value));
-    setSimulationValue(next);
-    simulationCenterRef.current = next;
-    const source = sourceRef.current;
-    if (source instanceof SimulatedSource) {
-      source.setTargetTotal(next);
-      engineRef.current?.syncFromSource();
-    }
-  };
-
-  useEffect(() => {
-    if (!labOpen || scene !== "artwork") return;
-    const id = window.setInterval(() => {
-      const source = sourceRef.current;
-      if (!(source instanceof SimulatedSource)) return;
-      const center = simulationCenterRef.current;
-      const current = source.getSnapshot().totalActiveUsers;
-      const proposed = current + Math.floor(Math.random() * 9) - 4;
-      const bounded = Math.max(1, Math.min(center + 20, Math.max(center - 20, proposed)));
-      const delta = bounded - current;
-      if (delta !== 0) {
-        source.nudgeTotal(delta);
-        setSimulationValue(bounded);
-        engineRef.current?.syncFromSource();
-      }
-    }, 900);
-    return () => window.clearInterval(id);
-  }, [labOpen, scene]);
-
-  useEffect(() => {
-    if (scene !== "artwork") return;
-    const pool = ["Emma · Tokyo", "Lucas · São Paulo", "Amina · Cairo", "Noah · Sydney", "Mila · Berlin", "A new light · Seoul"];
-    const id = window.setInterval(() => {
-      setTickerItems((items) => [pool[Math.floor(Math.random() * pool.length)], ...items].slice(0, 12));
-    }, 5200);
-    return () => window.clearInterval(id);
-  }, [scene]);
-
-  const simulationExponent = Math.log10(Math.max(1, simulationValue));
-  const simulationMode = simulationValue <= 12000 ? "1 person = 1 visible light" : "adaptive density (exact counter)";
 
   const selfCard: SelfCardInfo | null = selfPos
     ? {
@@ -511,32 +466,6 @@ export default function TelliumExperience() {
           </section>
         </div>
       )}
-
-
-      <aside className={`simulation-lab${labOpen ? " open" : ""}`} aria-label="Tellium simulation laboratory">
-        <button className="lab-toggle" onClick={() => setLabOpen((v) => !v)}>{labOpen ? "×" : "TEST"}</button>
-        {labOpen && (
-          <div className="lab-panel">
-            <div className="lab-title">Simulation laboratory</div>
-            <div className="lab-value">{simulationValue.toLocaleString("en-US")}</div>
-            <input
-              aria-label="Simulated connected people"
-              type="range"
-              min="0"
-              max="8"
-              step="0.01"
-              value={simulationExponent}
-              onChange={(e) => setSimulationTotal(Math.pow(10, Number(e.target.value)))}
-            />
-            <div className="lab-presets">
-              {[4, 214, 1000, 100000, 1000000, 100000000].map((n) => (
-                <button key={n} onClick={() => setSimulationTotal(n)}>{n >= 1000000 ? `${n / 1000000}M` : n >= 1000 ? `${n / 1000}K` : n}</button>
-              ))}
-            </div>
-            <div className="lab-mode">{simulationMode}</div>
-          </div>
-        )}
-      </aside>
 
       <div className="toasts">
         {toasts.map((t) => (
