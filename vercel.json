@@ -1,4 +1,5 @@
 {
-  "installCommand": "npm ci --omit=optional --no-audit --no-fund",
-  "buildCommand": "npm run build"
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "buildCommand": "pnpm run build"
 }
