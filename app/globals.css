@@ -1070,3 +1070,166 @@ body {
 }
 .social-share-row button:hover { border-color:rgba(229,182,109,.55); color:#f0c27c; }
 .capture-dialog small { text-align:center; }
+
+/* ===== V17 — Real presence responsive layout ===== */
+
+/* Le compteur ne grandit plus démesurément quand il affiche 1 seul chiffre. */
+.artwork-bottom .led-mini {
+  width: auto !important;
+  height: clamp(72px, 13vh, 118px) !important;
+  max-width: min(52vw, 360px) !important;
+  display: block;
+  margin: 4px auto 0;
+}
+
+/* Bloc inférieur plus compact pour laisser respirer le globe. */
+.artwork-bottom {
+  width: min(74vw, 680px);
+  padding: 10px 22px 8px;
+  bottom: clamp(12px, 2vh, 24px);
+}
+
+/* Le globe reste l'élément principal. */
+.scene-artwork .tellium-canvas {
+  transform: scale(.94);
+  transform-origin: 50% 43%;
+}
+
+/* Affichage mobile portrait. */
+@media (max-width: 760px) {
+  .persistent-clock {
+    top: 12px !important;
+    left: 12px !important;
+    transform: scale(.76) !important;
+    transform-origin: top left;
+  }
+
+  .center-brand {
+    top: 18px !important;
+    width: 48vw !important;
+  }
+
+  .brand-name {
+    font-size: 15px !important;
+    letter-spacing: .32em !important;
+  }
+
+  .brand-tagline {
+    display: none;
+  }
+
+  .artwork-top-actions {
+    top: auto !important;
+    right: auto !important;
+    left: 50% !important;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 14px) !important;
+    transform: translateX(-50%);
+    width: calc(100vw - 24px);
+    justify-content: center;
+    z-index: 80;
+  }
+
+  .artwork-top-actions .btn {
+    flex: 1;
+    max-width: 170px;
+    padding: 9px 8px !important;
+    font-size: 7.5px !important;
+    white-space: nowrap;
+  }
+
+  .scene-artwork .tellium-canvas {
+    transform: scale(.82) translateY(-5vh);
+    transform-origin: 50% 40%;
+  }
+
+  .artwork-bottom {
+    width: calc(100vw - 24px) !important;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 66px) !important;
+    padding: 8px 10px 6px !important;
+    border-radius: 18px;
+  }
+
+  .artwork-bottom .led-mini {
+    width: auto !important;
+    height: clamp(58px, 10vh, 82px) !important;
+    max-width: 70vw !important;
+    margin-top: 2px;
+  }
+
+  .artwork-counter-label {
+    font-size: 7px !important;
+    letter-spacing: .18em !important;
+  }
+
+  .artwork-meta {
+    margin-top: 1px !important;
+    font-size: 7px !important;
+  }
+
+  .life-ticker {
+    height: 24px !important;
+    margin-top: 5px !important;
+  }
+
+  .life-ticker span {
+    font-size: 7px !important;
+  }
+
+  .map-controls {
+    right: 8px !important;
+    bottom: 172px !important;
+    transform: scale(.82);
+    transform-origin: bottom right;
+  }
+
+  .tellium-dialog {
+    width: calc(100vw - 22px) !important;
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+  }
+}
+
+/* Très petits téléphones. */
+@media (max-width: 390px) {
+  .scene-artwork .tellium-canvas {
+    transform: scale(.74) translateY(-7vh);
+  }
+
+  .artwork-bottom .led-mini {
+    height: 54px !important;
+  }
+
+  .map-controls {
+    bottom: 162px !important;
+  }
+}
+
+/* Téléphone en mode paysage. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .artwork-bottom {
+    width: min(58vw, 560px) !important;
+    bottom: 6px !important;
+    padding: 4px 14px !important;
+  }
+
+  .artwork-bottom .led-mini {
+    height: 48px !important;
+  }
+
+  .life-ticker {
+    display: none;
+  }
+
+  .artwork-top-actions {
+    top: 12px !important;
+    right: 12px !important;
+    left: auto !important;
+    bottom: auto !important;
+    width: auto;
+    transform: none;
+  }
+
+  .scene-artwork .tellium-canvas {
+    transform: scale(.86);
+  }
+}
