@@ -1866,3 +1866,18 @@ body {
   }
 }
 
+
+/* ===== V17.9 — lower mobile brand only ===== */
+
+@media (max-width: 760px) {
+  .center-brand {
+    top: 42px !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .center-brand {
+    top: 40px !important;
+  }
+}
+
