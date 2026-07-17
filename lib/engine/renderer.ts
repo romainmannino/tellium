@@ -548,27 +548,63 @@ export class TelliumRenderer {
     const cx = this.W / 2;
     const cy = this.H / 2;
     const R = this.globe.radius;
-    const atm = ctx.createRadialGradient(cx, cy, R * 0.92, cx, cy, R * 1.28);
-    atm.addColorStop(0, "rgba(55,118,220,0)");
-    atm.addColorStop(0.43, "rgba(62,132,235,0.11)");
-    atm.addColorStop(0.68, "rgba(255,185,95,0.045)");
-    atm.addColorStop(1, "rgba(55,118,220,0)");
+    /*
+     * Atmosphère naturelle : halo bleu subtil à l’extérieur,
+     * puis un limbe blanc extrêmement fin au contact du globe.
+     */
+    const atm = ctx.createRadialGradient(
+      cx,
+      cy,
+      R * 0.94,
+      cx,
+      cy,
+      R * 1.12,
+    );
+    atm.addColorStop(0, "rgba(75,145,235,0)");
+    atm.addColorStop(0.30, "rgba(74,145,238,0.055)");
+    atm.addColorStop(0.56, "rgba(79,154,248,0.12)");
+    atm.addColorStop(0.73, "rgba(117,181,255,0.075)");
+    atm.addColorStop(1, "rgba(70,140,235,0)");
+
     ctx.fillStyle = atm;
     ctx.beginPath();
-    ctx.arc(cx, cy, R * 1.28, 0, Math.PI * 2);
+    ctx.arc(cx, cy, R * 1.13, 0, Math.PI * 2);
     ctx.fill();
-    const disc = ctx.createRadialGradient(cx - R * 0.28, cy - R * 0.3, R * 0.08, cx, cy, R);
-    disc.addColorStop(0, "#090a0b");
-    disc.addColorStop(0.68, "#030405");
-    disc.addColorStop(1, "#010102");
+
+    /*
+     * Globe bleu nuit presque noir.
+     * Le centre conserve une très légère profondeur bleue.
+     */
+    const disc = ctx.createRadialGradient(
+      cx - R * 0.30,
+      cy - R * 0.34,
+      R * 0.04,
+      cx,
+      cy,
+      R,
+    );
+    disc.addColorStop(0, "#091527");
+    disc.addColorStop(0.38, "#06101e");
+    disc.addColorStop(0.72, "#030914");
+    disc.addColorStop(1, "#010309");
+
     ctx.fillStyle = disc;
     ctx.beginPath();
     ctx.arc(cx, cy, R, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = "rgba(100,170,255,0.19)";
-    ctx.lineWidth = 1;
+
+    // Lueur bleue externe, très fine.
+    ctx.strokeStyle = "rgba(78,151,242,0.28)";
+    ctx.lineWidth = 2.2;
     ctx.beginPath();
-    ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.arc(cx, cy, R + 1.4, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Trait blanc atmosphérique au bord du globe.
+    ctx.strokeStyle = "rgba(222,239,255,0.46)";
+    ctx.lineWidth = 0.65;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R - 0.35, 0, Math.PI * 2);
     ctx.stroke();
   }
 
