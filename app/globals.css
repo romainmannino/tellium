@@ -1814,3 +1814,55 @@ body {
     transition-duration: .45s !important;
   }
 }
+
+/* ===== V17.7 — lock final counter position ===== */
+
+/* Centre parfaitement le bloc compteur sur Home 2. */
+.scene-artwork .artwork-bottom {
+  position: fixed !important;
+  left: 50% !important;
+  right: auto !important;
+  transform: translateX(-50%) !important;
+  margin: 0 !important;
+  width: min(74vw, 680px) !important;
+  bottom: clamp(12px, 2vh, 24px) !important;
+  animation: none !important;
+}
+
+/* Empêche le compteur lui-même de conserver un ancien transform. */
+.scene-artwork .artwork-bottom .led-mini,
+.scene-artwork .artwork-bottom .artwork-counter-label,
+.scene-artwork .artwork-bottom .artwork-meta,
+.scene-artwork .artwork-bottom .life-ticker {
+  transform: none !important;
+}
+
+/* L’animation d’arrivée ne doit jouer que sur l’opacité. */
+.scene-artwork .artwork-top-actions,
+.scene-artwork .map-controls {
+  animation: telliumHudFadeOnly .45s ease-out both !important;
+}
+
+@keyframes telliumHudFadeOnly {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Mobile */
+@media (max-width: 760px) {
+  .scene-artwork .artwork-bottom {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    width: calc(100vw - 24px) !important;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 66px) !important;
+  }
+}
+
+/* Très petits écrans */
+@media (max-width: 390px) {
+  .scene-artwork .artwork-bottom {
+    width: calc(100vw - 18px) !important;
+  }
+}
+
