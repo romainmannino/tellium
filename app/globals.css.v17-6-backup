@@ -1469,338 +1469,235 @@ body {
 }
 
 
-/* ===== V17.6 — final seamless transition ===== */
+/* ===== V17.5 — clean crossfade home to artwork ===== */
 
 /*
- * Le pseudo-élément utilisé précédemment est totalement désactivé.
- * Il provoquait la cassure horizontale au-dessus de la photographie.
- */
-.tellium-scene::after {
-  display: none !important;
-  content: none !important;
-}
-
-/*
- * La photographie terrestre utilise désormais le véritable élément
- * .rising-earth déjà présent dans le composant.
- */
-.rising-earth {
-  display: block !important;
-  position: fixed !important;
-  z-index: 6 !important;
-  pointer-events: none !important;
-
-  left: 0 !important;
-  right: 0 !important;
-  bottom: -2px !important;
-
-  width: 100vw !important;
-  height: min(52vh, 520px) !important;
-
-  border: 0 !important;
-  box-shadow: none !important;
-
-  background:
-    linear-gradient(
-      to bottom,
-      rgba(0, 0, 0, 0) 0%,
-      rgba(0, 0, 0, .015) 32%,
-      rgba(0, 0, 0, .08) 68%,
-      rgba(0, 0, 0, .20) 100%
-    ),
-    url("/earth-horizon.webp") center bottom / cover no-repeat !important;
-
-  /*
-   * Le haut de l’image est progressivement transparent.
-   * Il n’existe donc plus de bord ou de ligne identifiable.
-   */
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    transparent 0%,
-    rgba(0,0,0,.02) 9%,
-    rgba(0,0,0,.12) 18%,
-    rgba(0,0,0,.38) 29%,
-    rgba(0,0,0,.76) 42%,
-    #000 56%,
-    #000 100%
-  ) !important;
-
-  mask-image: linear-gradient(
-    to bottom,
-    transparent 0%,
-    rgba(0,0,0,.02) 9%,
-    rgba(0,0,0,.12) 18%,
-    rgba(0,0,0,.38) 29%,
-    rgba(0,0,0,.76) 42%,
-    #000 56%,
-    #000 100%
-  ) !important;
-
-  opacity: 0;
-  transform: translate3d(0, 8%, 0) scale(1.02);
-
-  will-change: opacity, transform;
-
-  transition:
-    opacity 1.45s cubic-bezier(.22,.72,.18,1),
-    transform 1.75s cubic-bezier(.18,.76,.18,1);
-}
-
-/* État Home 1. */
-.scene-home .rising-earth {
-  opacity: .96 !important;
-  transform: translate3d(0, 0, 0) scale(1.02) !important;
-}
-
-/* L’image glisse doucement sous le globe pendant le fondu. */
-.scene-revealing .rising-earth {
-  opacity: 0 !important;
-  transform: translate3d(0, 16%, 0) scale(1.055) !important;
-}
-
-/* Home 2 : aucune image de fond résiduelle. */
-.scene-artwork .rising-earth {
-  opacity: 0 !important;
-  visibility: hidden;
-}
-
-/*
- * Le globe réel est toujours chargé derrière la Home 1.
- * Seule son opacité change : aucun remplacement de fond.
+ * Le canvas du globe est toujours présent derrière la Home.
+ * On ne le remplace plus : on le révèle progressivement.
  */
 .tellium-canvas {
-  z-index: 3 !important;
-  will-change: opacity, transform;
+  opacity: 1;
   transition:
-    opacity 1.55s cubic-bezier(.2,.72,.18,1),
-    transform 1.7s cubic-bezier(.18,.76,.18,1) !important;
-}
-
-.scene-home .tellium-canvas {
-  opacity: 0 !important;
-  transform: translate3d(0, 0, 0) scale(.965) !important;
-}
-
-.scene-revealing .tellium-canvas {
-  opacity: 1 !important;
-  transform: translate3d(0, 0, 0) scale(1) !important;
-}
-
-.scene-artwork .tellium-canvas {
-  opacity: 1 !important;
-  transform: translate3d(0, 0, 0) scale(1) !important;
+    opacity 1.45s cubic-bezier(.22,.72,.18,1),
+    filter 1.45s cubic-bezier(.22,.72,.18,1),
+    transform 1.55s cubic-bezier(.18,.74,.18,1);
 }
 
 /*
- * L’orbe reste physiquement en place.
- * Sa matière, sa bordure et sa grille s’effacent séparément.
- * Le compteur peut ainsi continuer son mouvement sans être coupé.
+ * Home 1 :
+ * le globe réel est déjà derrière mais totalement invisible.
+ */
+.scene-home .tellium-canvas {
+  opacity: 0;
+  transform: scale(.985);
+  filter: brightness(.66) blur(2px);
+}
+
+/*
+ * Pendant le fondu, le globe réel apparaît lentement.
+ */
+.scene-revealing .tellium-canvas {
+  opacity: 1;
+  transform: scale(1);
+  filter: brightness(.92) blur(0);
+}
+
+/*
+ * État final inchangé.
+ */
+.scene-artwork .tellium-canvas {
+  opacity: 1;
+  transform: scale(1);
+  filter: brightness(.98);
+}
+
+/*
+ * Toute la Home 1 s’efface ensemble :
+ * orbe, bouton, compteur et décor.
  */
 .home-stage {
-  z-index: 20 !important;
-  pointer-events: auto;
-}
-
-.home-orb {
+  opacity: 1;
+  transform: scale(1);
   transition:
-    background-color 1.15s ease,
-    border-color 1.15s ease,
-    box-shadow 1.15s ease !important;
+    opacity 1.3s cubic-bezier(.25,.7,.2,1),
+    transform 1.45s cubic-bezier(.22,.72,.18,1),
+    filter 1.25s ease;
 }
 
-.scene-revealing .home-orb {
-  background-color: transparent !important;
-  border-color: transparent !important;
-  box-shadow: none !important;
+.scene-revealing .home-stage {
+  opacity: 0;
+  transform: scale(1.025);
+  filter: blur(2px);
+  pointer-events: none;
 }
 
-.orb-grid {
-  transition: opacity .9s ease !important;
-}
-
-.scene-revealing .orb-grid {
-  opacity: 0 !important;
-}
-
-.reveal-button {
-  transition:
-    opacity .55s ease,
-    transform .75s cubic-bezier(.2,.72,.18,1) !important;
-}
-
-.scene-revealing .reveal-button {
-  opacity: 0 !important;
-  transform: translate3d(0, 20px, 0) scale(.91) !important;
-  pointer-events: none !important;
+.scene-artwork .home-stage {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 /*
- * Élément central de la transition :
- * le compteur descend et adopte progressivement la taille du compteur final.
+ * Le compteur de la Home 1 descend vers le compteur de Home 2.
+ * Il rétrécit progressivement pendant le déplacement.
  */
 .scene-revealing .home-counter {
-  animation: telliumFinalCounterMove 1.7s
-    cubic-bezier(.18,.78,.18,1) both !important;
-
-  will-change: transform, opacity;
-}
-
-@keyframes telliumFinalCounterMove {
-  0% {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-
-  28% {
-    opacity: 1;
-    transform: translate3d(0, 7vh, 0) scale(.86);
-  }
-
-  68% {
-    opacity: .94;
-    transform: translate3d(0, 24vh, 0) scale(.54);
-  }
-
-  88% {
-    opacity: .70;
-    transform: translate3d(0, 31vh, 0) scale(.43);
-  }
-
-  100% {
-    opacity: 0;
-    transform: translate3d(0, 34vh, 0) scale(.40);
-  }
+  animation: telliumCounterTransfer 1.5s
+    cubic-bezier(.18,.76,.18,1) both;
 }
 
 /*
- * Le passage noir vers bleu nuit est extrêmement léger.
- * Le fond ne change jamais brutalement.
+ * Le bouton central disparaît légèrement avant le reste,
+ * afin de libérer visuellement la trajectoire du compteur.
  */
-.tellium-scene {
-  background-color: #010206 !important;
-  transition: background-color 1.6s ease !important;
-}
-
-.scene-home {
-  background-color: #010102 !important;
-}
-
-.scene-revealing {
-  background-color: #010308 !important;
-}
-
-.scene-artwork {
-  background-color: #01050c !important;
+.scene-revealing .reveal-button {
+  opacity: 0;
+  transform: translateY(18px) scale(.92);
+  transition:
+    opacity .55s ease,
+    transform .75s cubic-bezier(.22,.72,.18,1);
 }
 
 /*
- * Suppression forcée de toutes les anciennes animations spectaculaires.
+ * Le décor terrestre de Home 1 s’efface progressivement,
+ * pendant que le globe situé derrière devient visible.
+ */
+.tellium-scene::after {
+  transition:
+    opacity 1.35s cubic-bezier(.2,.7,.2,1),
+    transform 1.55s cubic-bezier(.2,.7,.2,1),
+    filter 1.3s ease;
+}
+
+.scene-home::after {
+  opacity: .98;
+}
+
+.scene-revealing::after {
+  opacity: 0;
+  transform: translateY(12%) scale(1.04);
+  filter: brightness(.55) blur(1px);
+}
+
+.scene-artwork::after {
+  opacity: 0;
+}
+
+/*
+ * Home 2 : les éléments d’interface existent dès la transition,
+ * mais apparaissent doucement à la fin.
+ */
+.scene-revealing .artwork-bottom,
+.scene-revealing .artwork-top-actions,
+.scene-revealing .map-controls {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/*
+ * Évite tout effet de constellation ou flash restant.
  */
 .scene-revealing::before,
 .scene-revealing .home-orb::after {
   display: none !important;
-  content: none !important;
   animation: none !important;
 }
 
 /*
- * Home 2 apparaît avec une finition courte après le fondu.
+ * Aucun morphing ou explosion de l’orbe.
  */
-.scene-artwork .artwork-bottom,
-.scene-artwork .artwork-top-actions,
-.scene-artwork .map-controls {
-  animation: telliumArtworkHudIn .55s ease-out both;
+.scene-revealing .home-orb {
+  animation: none !important;
 }
 
-@keyframes telliumArtworkHudIn {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 8px, 0);
+/*
+ * Mouvement du compteur :
+ * départ au centre de Home 1,
+ * arrivée vers le bas de Home 2,
+ * avec réduction progressive.
+ */
+@keyframes telliumCounterTransfer {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
   }
 
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
+  35% {
+    opacity: .96;
+    transform: translateY(8vh) scale(.84);
+    filter: blur(0);
+  }
+
+  72% {
+    opacity: .52;
+    transform: translateY(24vh) scale(.56);
+    filter: blur(.4px);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(34vh) scale(.42);
+    filter: blur(1px);
   }
 }
 
 /*
- * Le contenu Home 1 disparaît seulement à l’état final,
- * après que le compteur a terminé sa trajectoire.
+ * Le fond passe progressivement du noir Home 1
+ * au bleu nuit Home 2 sans changement sec.
  */
-.scene-artwork .home-stage {
-  opacity: 0 !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
+.tellium-scene {
+  transition:
+    background-color 1.5s ease,
+    box-shadow 1.5s ease;
 }
 
-/* ============================================================
-   MOBILE
-   ============================================================ */
+.scene-home {
+  background-color: #010102;
+}
 
+.scene-revealing {
+  background-color: #01040a;
+}
+
+.scene-artwork {
+  background-color: #01050c;
+}
+
+/*
+ * Mobile : déplacement plus court,
+ * pour que le compteur ne sorte pas de l’écran.
+ */
 @media (max-width: 760px) {
-  .rising-earth {
-    height: min(45vh, 430px) !important;
-    background-size: auto 100% !important;
-    background-position: center bottom !important;
-
-    -webkit-mask-image: linear-gradient(
-      to bottom,
-      transparent 0%,
-      rgba(0,0,0,.02) 12%,
-      rgba(0,0,0,.14) 23%,
-      rgba(0,0,0,.44) 34%,
-      rgba(0,0,0,.82) 47%,
-      #000 61%,
-      #000 100%
-    ) !important;
-
-    mask-image: linear-gradient(
-      to bottom,
-      transparent 0%,
-      rgba(0,0,0,.02) 12%,
-      rgba(0,0,0,.14) 23%,
-      rgba(0,0,0,.44) 34%,
-      rgba(0,0,0,.82) 47%,
-      #000 61%,
-      #000 100%
-    ) !important;
-  }
-
   .scene-revealing .home-counter {
-    animation-name: telliumFinalCounterMoveMobile !important;
+    animation-name: telliumCounterTransferMobile;
   }
 
-  @keyframes telliumFinalCounterMoveMobile {
+  @keyframes telliumCounterTransferMobile {
     0% {
       opacity: 1;
-      transform: translate3d(0, 0, 0) scale(1);
+      transform: translateY(0) scale(1);
     }
 
-    32% {
-      opacity: 1;
-      transform: translate3d(0, 7vh, 0) scale(.82);
+    42% {
+      opacity: .92;
+      transform: translateY(10vh) scale(.80);
     }
 
-    72% {
-      opacity: .90;
-      transform: translate3d(0, 17vh, 0) scale(.53);
-    }
-
-    90% {
-      opacity: .62;
-      transform: translate3d(0, 22vh, 0) scale(.43);
+    78% {
+      opacity: .46;
+      transform: translateY(20vh) scale(.54);
     }
 
     100% {
       opacity: 0;
-      transform: translate3d(0, 24vh, 0) scale(.40);
+      transform: translateY(27vh) scale(.42);
     }
   }
 }
 
 /*
- * Accessibilité : transition courte sans déplacement important.
+ * Réduction des mouvements si le visiteur l’a demandé.
  */
 @media (prefers-reduced-motion: reduce) {
   .scene-revealing .home-counter {
@@ -1808,98 +1705,8 @@ body {
   }
 
   .tellium-canvas,
-  .rising-earth,
-  .home-orb,
-  .orb-grid {
+  .home-stage,
+  .tellium-scene::after {
     transition-duration: .45s !important;
   }
-}
-
-/* ===== V17.7 — lock final counter position ===== */
-
-/* Centre parfaitement le bloc compteur sur Home 2. */
-.scene-artwork .artwork-bottom {
-  position: fixed !important;
-  left: 50% !important;
-  right: auto !important;
-  transform: translateX(-50%) !important;
-  margin: 0 !important;
-  width: min(74vw, 680px) !important;
-  bottom: clamp(12px, 2vh, 24px) !important;
-  animation: none !important;
-}
-
-/* Empêche le compteur lui-même de conserver un ancien transform. */
-.scene-artwork .artwork-bottom .led-mini,
-.scene-artwork .artwork-bottom .artwork-counter-label,
-.scene-artwork .artwork-bottom .artwork-meta,
-.scene-artwork .artwork-bottom .life-ticker {
-  transform: none !important;
-}
-
-/* L’animation d’arrivée ne doit jouer que sur l’opacité. */
-.scene-artwork .artwork-top-actions,
-.scene-artwork .map-controls {
-  animation: telliumHudFadeOnly .45s ease-out both !important;
-}
-
-@keyframes telliumHudFadeOnly {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-/* Mobile */
-@media (max-width: 760px) {
-  .scene-artwork .artwork-bottom {
-    left: 50% !important;
-    right: auto !important;
-    transform: translateX(-50%) !important;
-    width: calc(100vw - 24px) !important;
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 66px) !important;
-  }
-}
-
-/* Très petits écrans */
-@media (max-width: 390px) {
-  .scene-artwork .artwork-bottom {
-    width: calc(100vw - 18px) !important;
-  }
-}
-
-
-/* ===== V17.9 — lower mobile brand only ===== */
-
-@media (max-width: 760px) {
-  .center-brand {
-    top: 42px !important;
-  }
-}
-
-@media (max-width: 390px) {
-  .center-brand {
-    top: 40px !important;
-  }
-}
-
-
-.display-qr {
-  position: fixed;
-  right: 28px;
-  bottom: 28px;
-  z-index: 30;
-  width: 112px;
-  height: 112px;
-  padding: 8px;
-  border-radius: 14px;
-  background: rgba(1, 4, 10, 0.82);
-  border: 1px solid rgba(226, 180, 108, 0.45);
-  box-shadow: 0 0 28px rgba(226, 180, 108, 0.16);
-  backdrop-filter: blur(10px);
-}
-
-.display-qr img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border-radius: 8px;
 }
