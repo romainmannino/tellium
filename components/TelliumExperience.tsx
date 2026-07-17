@@ -118,12 +118,12 @@ export default function TelliumExperience() {
     setScene("revealing");
     setSelfPos(null);
     /*
-     * Transition cinématique :
-     * les constellations quittent l’orbe avant que la lumière personnelle
-     * rejoigne sa vraie position sur le globe.
+     * Home 2 est déjà présente derrière Home 1.
+     * On effectue seulement un fondu croisé et le compteur
+     * descend vers sa position définitive.
      */
-    window.setTimeout(() => engine?.replaySelfArrival(), 1120);
-    window.setTimeout(() => setScene("artwork"), 2380);
+    window.setTimeout(() => engine?.replaySelfArrival(), 760);
+    window.setTimeout(() => setScene("artwork"), 1550);
   };
 
   const revealArtwork = () => {
