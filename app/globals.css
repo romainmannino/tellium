@@ -1899,8 +1899,9 @@ body {
 
 .display-qr img {
   display: block;
-  width: 100%;
-  height: 100%;
+  width: 112px;
+  height: 112px;
+  margin: 8px auto 0;
   border-radius: 8px;
 }
 
@@ -1933,3 +1934,38 @@ body {
   font-size: 8px;
   letter-spacing: 0.12em;
 }
+
+/* ---------- DISPLAY QR V2 ---------- */
+
+.display-qr{
+  position:fixed;
+  right:28px;
+  bottom:28px;
+  z-index:30;
+
+  width:158px;
+  padding:18px 14px 14px;
+
+  text-align:center;
+  overflow:hidden;
+
+  border:1px solid rgba(226,180,108,.45);
+  border-radius:18px;
+
+  background:rgba(1,4,10,.88);
+  box-shadow:0 0 28px rgba(226,180,108,.16);
+  backdrop-filter:blur(10px);
+}
+
+.display-qr-image{
+  display:block;
+  width:112px;
+  height:112px;
+  margin:10px auto 0;
+  border-radius:8px;
+}
+
+.display-qr-copy{
+  margin-bottom:10px;
+}
+
