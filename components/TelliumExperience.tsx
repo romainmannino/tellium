@@ -10,6 +10,7 @@ import LedCounter from "./LedCounter";
 import CountryTooltip from "./CountryTooltip";
 import MapControls from "./MapControls";
 import SelfCard, { type SelfCardInfo } from "./SelfCard";
+import ConstellationQr from "@/components/ConstellationQr";
 
 type Toast = { id: number; html: string; kind: "default" | "friend" };
 type Scene = "home" | "revealing" | "artwork";
@@ -500,14 +501,18 @@ export default function TelliumExperience({
       {displayMode && (
         <div className="display-qr">
           <div className="display-qr-copy">
-            <strong>LIGHT UP THE WORLD</strong>
-            <span>Scan to begin</span>
+            <strong>
+              SCAN TO ADD
+              <br />
+              YOUR LIGHT
+            </strong>
+            <span>JOIN THE LIVING CONSTELLATION</span>
           </div>
-          <img
-            src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(
-              typeof window !== "undefined" ? window.location.origin : "/"
-            )}`}
-            alt="Scan to open Tellium"
+
+          <ConstellationQr
+            value="https://tellium.vercel.app/"
+            size={132}
+            className="display-qr-image"
           />
         </div>
       )}
