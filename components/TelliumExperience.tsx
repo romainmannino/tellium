@@ -26,7 +26,13 @@ function dataUrlToBlob(dataUrl: string): Blob {
   return new Blob([arr], { type: mime });
 }
 
-export default function TelliumExperience() {
+type TelliumExperienceProps = {
+  displayMode?: boolean;
+};
+
+export default function TelliumExperience({
+  displayMode = false,
+}: TelliumExperienceProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<TelliumRenderer | null>(null);
   const sourceRef = useRef<PresenceSource | null>(null);
@@ -39,7 +45,9 @@ export default function TelliumExperience() {
   const [capturing, setCapturing] = useState(false);
   const [galleryMode, setGalleryMode] = useState(false);
   const [selfPos, setSelfPos] = useState<{ x: number; y: number } | null>(null);
-  const [scene, setScene] = useState<Scene>("home");
+  const [scene, setScene] = useState<Scene>(
+  displayMode ? "artwork" : "home"
+);
   const [inviteDialog, setInviteDialog] = useState<InviteDialog>(null);
   const [captureDialog, setCaptureDialog] = useState<CaptureDialog>(null);
   const [homeArrivalPulse, setHomeArrivalPulse] = useState(false);
