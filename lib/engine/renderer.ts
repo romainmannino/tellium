@@ -580,7 +580,7 @@ export class TelliumRenderer {
     // très peu de visiteurs. Elle reste volontairement froide et presque
     // éteinte : seules les présences réelles utilisent l'or chaud.
     const populationStage = Math.min(1, Math.log10(Math.max(10, this.currentTotal)) / 8);
-    const base = (0.105 + populationStage * 0.022) * boost;
+    const base = (0.145 + populationStage * 0.026) * boost;
     for (const dot of this.landDots) {
       const n = projectNorm(dot.lat, dot.lng);
       const p = this.projectPoint(n.nx, n.ny);
@@ -588,7 +588,7 @@ export class TelliumRenderer {
       if (p.x < -4 || p.x > this.W + 4 || p.y < -4 || p.y > this.H + 4) continue;
       const a = base * this.limbFade(p.depth);
       if (a <= 0.003) continue;
-      ctx.fillStyle = `rgba(118,137,158,${a})`;
+      ctx.fillStyle = `rgba(132,153,180,${a})`;
       const size = Math.max(0.72, 0.8 * p.scale);
       ctx.fillRect(p.x - size / 2, p.y - size / 2, size, size);
     }

@@ -1233,3 +1233,87 @@ body {
     transform: scale(.86);
   }
 }
+
+/* ===== V17.1 — local clock, mobile controls and visible Earth ===== */
+
+/* Les contrôles restent toujours au-dessus du compteur et du ticker. */
+.map-controls {
+  z-index: 96 !important;
+  pointer-events: auto !important;
+}
+
+.map-controls .ctrl {
+  pointer-events: auto !important;
+}
+
+/* Le slogan reste visible sur smartphone. */
+@media (max-width: 760px) {
+  .center-brand {
+    top: 16px !important;
+    width: 62vw !important;
+    max-width: 290px;
+  }
+
+  .brand-name {
+    font-size: 15px !important;
+    letter-spacing: .32em !important;
+  }
+
+  .brand-tagline {
+    display: block !important;
+    margin-top: 7px !important;
+    font-size: 6.5px !important;
+    line-height: 1.5 !important;
+    letter-spacing: .16em !important;
+    white-space: nowrap;
+    opacity: .76;
+  }
+
+  /*
+   * La colonne + / − / World view / Find my light remonte
+   * suffisamment pour ne plus passer derrière le compteur.
+   */
+  .map-controls {
+    right: 9px !important;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 230px) !important;
+    transform: scale(.88) !important;
+    transform-origin: bottom right !important;
+    gap: 7px !important;
+  }
+
+  .map-controls .ctrl {
+    width: 42px !important;
+    height: 42px !important;
+  }
+}
+
+/* Très petits écrans. */
+@media (max-width: 390px) {
+  .center-brand {
+    width: 68vw !important;
+  }
+
+  .brand-tagline {
+    font-size: 5.8px !important;
+    letter-spacing: .13em !important;
+  }
+
+  .map-controls {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 214px) !important;
+    transform: scale(.82) !important;
+  }
+}
+
+/* Smartphone en paysage : contrôles à droite, sans gêner le contenu. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .map-controls {
+    right: 10px !important;
+    bottom: 10px !important;
+    transform: scale(.76) !important;
+  }
+
+  .brand-tagline {
+    display: block !important;
+  }
+}
+

@@ -76,10 +76,18 @@ export default function TelliumExperience() {
 
     const tickClock = () => {
       const d = new Date();
-      const p = (x: number) => String(x).padStart(2, "0");
       setClock({
-        date: d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" }).toUpperCase(),
-        utc: `${p(d.getUTCHours())}:${p(d.getUTCMinutes())}:${p(d.getUTCSeconds())}`,
+        date: d.toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        }).toUpperCase(),
+        utc: d.toLocaleTimeString("en-GB", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false,
+        }),
       });
     };
     tickClock();
@@ -349,7 +357,7 @@ export default function TelliumExperience() {
         <span className="clock-icon">◷</span>
         <div>
           <div className="clock-time">{clock.utc}</div>
-          <div className="clock-date">{clock.date} · UTC</div>
+          <div className="clock-date">{clock.date} · LOCAL</div>
         </div>
       </div>
 
