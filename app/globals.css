@@ -1903,3 +1903,33 @@ body {
   height: 100%;
   border-radius: 8px;
 }
+
+.display-qr {
+  width: 138px;
+  height: auto;
+  padding: 12px;
+  text-align: center;
+}
+
+.display-qr-copy {
+  margin-bottom: 10px;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+.display-qr-copy strong {
+  display: block;
+  color: rgba(236, 190, 117, 0.95);
+  font-size: 11px;
+  line-height: 1.45;
+  font-weight: 500;
+}
+
+.display-qr-copy span {
+  display: block;
+  margin-top: 4px;
+  color: rgba(194, 207, 224, 0.72);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+}

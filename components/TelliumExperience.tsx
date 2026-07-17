@@ -499,6 +499,10 @@ export default function TelliumExperience({
 
       {displayMode && (
         <div className="display-qr">
+          <div className="display-qr-copy">
+            <strong>LIGHT UP THE WORLD</strong>
+            <span>Scan to begin</span>
+          </div>
           <img
             src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(
               typeof window !== "undefined" ? window.location.origin : "/"
