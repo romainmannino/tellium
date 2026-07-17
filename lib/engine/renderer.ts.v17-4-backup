@@ -593,28 +593,18 @@ export class TelliumRenderer {
     ctx.arc(cx, cy, R, 0, Math.PI * 2);
     ctx.fill();
 
-    /*
-     * Halo bleu extérieur : légèrement diffus,
-     * clairement séparé du contour physique du globe.
-     */
-    ctx.save();
-    ctx.shadowColor = "rgba(65,145,245,0.42)";
-    ctx.shadowBlur = 12;
-    ctx.strokeStyle = "rgba(66,143,238,0.22)";
-    ctx.lineWidth = 2.1;
+    // Lueur bleue externe, très fine.
+    ctx.strokeStyle = "rgba(78,151,242,0.28)";
+    ctx.lineWidth = 2.2;
     ctx.beginPath();
-    ctx.arc(cx, cy, R + 2.2, 0, Math.PI * 2);
+    ctx.arc(cx, cy, R + 1.4, 0, Math.PI * 2);
     ctx.stroke();
-    ctx.restore();
 
-    /*
-     * Limbe blanc : très fin mais beaucoup plus contrasté,
-     * comme l’atmosphère réelle observée depuis l’espace.
-     */
-    ctx.strokeStyle = "rgba(235,247,255,0.76)";
-    ctx.lineWidth = 0.72;
+    // Trait blanc atmosphérique au bord du globe.
+    ctx.strokeStyle = "rgba(222,239,255,0.46)";
+    ctx.lineWidth = 0.65;
     ctx.beginPath();
-    ctx.arc(cx, cy, R - 0.15, 0, Math.PI * 2);
+    ctx.arc(cx, cy, R - 0.35, 0, Math.PI * 2);
     ctx.stroke();
   }
 

@@ -26,13 +26,7 @@ function dataUrlToBlob(dataUrl: string): Blob {
   return new Blob([arr], { type: mime });
 }
 
-type TelliumExperienceProps = {
-  displayMode?: boolean;
-};
-
-export default function TelliumExperience({
-  displayMode = false,
-}: TelliumExperienceProps) {
+export default function TelliumExperience() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<TelliumRenderer | null>(null);
   const sourceRef = useRef<PresenceSource | null>(null);
@@ -45,9 +39,7 @@ export default function TelliumExperience({
   const [capturing, setCapturing] = useState(false);
   const [galleryMode, setGalleryMode] = useState(false);
   const [selfPos, setSelfPos] = useState<{ x: number; y: number } | null>(null);
-  const [scene, setScene] = useState<Scene>(
-  displayMode ? "artwork" : "home"
-);
+  const [scene, setScene] = useState<Scene>("home");
   const [inviteDialog, setInviteDialog] = useState<InviteDialog>(null);
   const [captureDialog, setCaptureDialog] = useState<CaptureDialog>(null);
   const [homeArrivalPulse, setHomeArrivalPulse] = useState(false);
@@ -125,13 +117,9 @@ export default function TelliumExperience({
     engine?.resetView();
     setScene("revealing");
     setSelfPos(null);
-    /*
-     * Home 2 est déjà présente derrière Home 1.
-     * On effectue seulement un fondu croisé et le compteur
-     * descend vers sa position définitive.
-     */
-    window.setTimeout(() => engine?.replaySelfArrival(), 1320);
-    window.setTimeout(() => setScene("artwork"), 1760);
+    // Une seule continuité : l’orbe s’efface pendant que le globe réel prend sa place.
+    window.setTimeout(() => engine?.replaySelfArrival(), 560);
+    window.setTimeout(() => setScene("artwork"), 1320);
   };
 
   const revealArtwork = () => {
@@ -402,21 +390,17 @@ export default function TelliumExperience({
 
       {isArtwork && (
         <>
-          {!displayMode && (
-            <>
-              <MapControls
-                onZoomIn={() => engineRef.current?.zoomIn()}
-                onZoomOut={() => engineRef.current?.zoomOut()}
-                onReset={() => engineRef.current?.resetView()}
-                onFindMe={() => engineRef.current?.findMyLight()}
-                canFindMe={selfReady}
-              />
-              <div className="artwork-top-actions hud">
-                <button className="btn primary" onClick={onInvite}><span>✦</span> Invite someone</button>
-                <button className="btn" onClick={onCapture} disabled={capturing}><span>▣</span> {capturing ? "Creating artwork…" : "Capture this moment"}</button>
-              </div>
-            </>
-          )}
+          <MapControls
+            onZoomIn={() => engineRef.current?.zoomIn()}
+            onZoomOut={() => engineRef.current?.zoomOut()}
+            onReset={() => engineRef.current?.resetView()}
+            onFindMe={() => engineRef.current?.findMyLight()}
+            canFindMe={selfReady}
+          />
+          <div className="artwork-top-actions hud">
+            <button className="btn primary" onClick={onInvite}><span>✦</span> Invite someone</button>
+            <button className="btn" onClick={onCapture} disabled={capturing}><span>▣</span> {capturing ? "Creating artwork…" : "Capture this moment"}</button>
+          </div>
 
           <div className="artwork-bottom hud">
             <div className="artwork-counter-label">Humans connected now</div>
@@ -496,21 +480,6 @@ export default function TelliumExperience({
           <div key={t.id} className={`toast${t.kind === "friend" ? " friend" : ""}`} dangerouslySetInnerHTML={{ __html: t.html }} />
         ))}
       </div>
-
-      {displayMode && (
-        <div className="display-qr">
-          <div className="display-qr-copy">
-            <strong>LIGHT UP THE WORLD</strong>
-            <span>Scan to begin</span>
-          </div>
-          <img
-            src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(
-              typeof window !== "undefined" ? window.location.origin : "/"
-            )}`}
-            alt="Scan to open Tellium"
-          />
-        </div>
-      )}
 
       <div className="art-frame" aria-hidden />
     </main>
