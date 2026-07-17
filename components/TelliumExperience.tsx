@@ -117,9 +117,13 @@ export default function TelliumExperience() {
     engine?.resetView();
     setScene("revealing");
     setSelfPos(null);
-    // Une seule continuité : l’orbe s’efface pendant que le globe réel prend sa place.
-    window.setTimeout(() => engine?.replaySelfArrival(), 560);
-    window.setTimeout(() => setScene("artwork"), 1320);
+    /*
+     * Transition cinématique :
+     * les constellations quittent l’orbe avant que la lumière personnelle
+     * rejoigne sa vraie position sur le globe.
+     */
+    window.setTimeout(() => engine?.replaySelfArrival(), 1120);
+    window.setTimeout(() => setScene("artwork"), 2380);
   };
 
   const revealArtwork = () => {

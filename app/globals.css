@@ -1467,3 +1467,353 @@ body {
     background-size: auto 100%;
   }
 }
+
+
+/* ===== V17.4 — seamless Earth and constellation reveal ===== */
+
+/*
+ * La photo terrestre ne commence plus brutalement.
+ * Le masque efface progressivement sa partie supérieure dans le noir.
+ */
+.tellium-scene::after {
+  content: "";
+  position: fixed;
+  z-index: 7;
+  pointer-events: none;
+
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: min(48vh, 480px);
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(0,0,0,0) 0%,
+      rgba(0,0,0,.01) 22%,
+      rgba(0,0,0,.06) 62%,
+      rgba(0,0,0,.20) 100%
+    ),
+    url("/earth-horizon.webp");
+
+  background-repeat: no-repeat;
+  background-position: center bottom;
+  background-size: cover;
+
+  /*
+   * Point essentiel :
+   * la partie haute de l’image devient progressivement transparente.
+   */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0,0,0,.05) 8%,
+    rgba(0,0,0,.35) 20%,
+    rgba(0,0,0,.82) 37%,
+    #000 53%,
+    #000 100%
+  );
+
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0,0,0,.05) 8%,
+    rgba(0,0,0,.35) 20%,
+    rgba(0,0,0,.82) 37%,
+    #000 53%,
+    #000 100%
+  );
+
+  opacity: 0;
+  transform: translateY(5%) scale(1.015);
+
+  transition:
+    opacity 1.6s cubic-bezier(.2,.72,.22,1),
+    transform 2.3s cubic-bezier(.18,.72,.18,1),
+    filter 1.8s ease;
+}
+
+/* Home : horizon visible et parfaitement fondu dans le noir. */
+.scene-home::after {
+  opacity: .98;
+  transform: translateY(0) scale(1.015);
+  filter: brightness(.91) saturate(.91);
+}
+
+/*
+ * Pendant la transition, l’horizon descend et disparaît progressivement.
+ * Il ne coupe plus brutalement au moment où le globe apparaît.
+ */
+.scene-revealing::after {
+  opacity: .34;
+  transform: translateY(13%) scale(1.055);
+  filter: brightness(.55) saturate(.72) blur(1.5px);
+}
+
+/* Page globe : l’image terrestre a totalement disparu. */
+.scene-artwork::after {
+  opacity: 0;
+  transform: translateY(22%) scale(1.08);
+}
+
+/*
+ * Nuage de constellation pendant la transition.
+ * Il naît au centre de l’orbe puis s’étend sur tout l’écran.
+ */
+.scene-revealing::before {
+  content: "";
+  position: fixed;
+  z-index: 39;
+  pointer-events: none;
+
+  inset: -18%;
+
+  background:
+    radial-gradient(circle at 50% 50%,
+      rgba(255,247,222,.90) 0 1px,
+      transparent 2px),
+    radial-gradient(circle at 43% 47%,
+      rgba(244,191,105,.85) 0 1.4px,
+      transparent 2.5px),
+    radial-gradient(circle at 57% 43%,
+      rgba(158,203,255,.72) 0 1px,
+      transparent 2.2px),
+    radial-gradient(circle at 47% 57%,
+      rgba(244,191,105,.78) 0 1.2px,
+      transparent 2.3px),
+    radial-gradient(circle at 54% 55%,
+      rgba(222,238,255,.68) 0 .8px,
+      transparent 2px);
+
+  background-size:
+    23px 23px,
+    31px 31px,
+    38px 38px,
+    47px 47px,
+    61px 61px;
+
+  mix-blend-mode: screen;
+
+  animation: telliumConstellationBurst 2.35s
+    cubic-bezier(.12,.72,.16,1) both;
+}
+
+/*
+ * Flash très bref au centre :
+ * perceptible, mais sans clignotement agressif.
+ */
+.scene-revealing .home-orb::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+
+  left: 50%;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+
+  background: rgba(255,248,228,.96);
+  box-shadow:
+    0 0 28px rgba(255,230,175,.72),
+    0 0 85px rgba(76,154,255,.36),
+    0 0 160px rgba(55,128,235,.20);
+
+  animation: telliumCoreFlash 1.65s ease-out both;
+}
+
+/*
+ * L’orbe se dilate légèrement avant de disparaître :
+ * il semble devenir le globe plutôt que d’être remplacé.
+ */
+.scene-revealing .home-orb {
+  animation: telliumOrbMorph 2.3s
+    cubic-bezier(.16,.74,.18,1) both;
+}
+
+/*
+ * Le globe réel apparaît progressivement dans la même zone.
+ */
+.scene-revealing .tellium-canvas {
+  opacity: 1;
+  animation: telliumGlobeReveal 2.35s
+    cubic-bezier(.14,.72,.18,1) both;
+}
+
+/* Fond global : aucun changement brutal entre noir-or et bleu nuit. */
+.tellium-scene {
+  transition:
+    background-color 2.1s ease,
+    box-shadow 2.1s ease;
+}
+
+.scene-home {
+  background-color: #010102;
+}
+
+.scene-revealing {
+  background-color: #02050a;
+}
+
+.scene-artwork {
+  background-color: #01050c;
+}
+
+/* Animations principales. */
+@keyframes telliumConstellationBurst {
+  0% {
+    opacity: 0;
+    transform: scale(.12) rotate(-3deg);
+    filter: blur(4px);
+  }
+
+  18% {
+    opacity: .95;
+  }
+
+  48% {
+    opacity: .70;
+    filter: blur(.2px);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.75) rotate(4deg);
+    filter: blur(1.4px);
+  }
+}
+
+@keyframes telliumCoreFlash {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(.1);
+  }
+
+  22% {
+    opacity: .95;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  52% {
+    opacity: .42;
+    transform: translate(-50%, -50%) scale(8);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(15);
+  }
+}
+
+@keyframes telliumOrbMorph {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    filter: brightness(1);
+  }
+
+  38% {
+    opacity: .92;
+    transform: scale(1.035);
+    filter: brightness(1.18);
+  }
+
+  75% {
+    opacity: .22;
+    transform: scale(1.19);
+    filter: brightness(.72) blur(1px);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.30);
+    filter: brightness(.5) blur(3px);
+  }
+}
+
+@keyframes telliumGlobeReveal {
+  0% {
+    opacity: 0;
+    transform: scale(.84);
+    filter: blur(8px) brightness(.45);
+  }
+
+  30% {
+    opacity: .16;
+  }
+
+  64% {
+    opacity: .82;
+    filter: blur(1px) brightness(.86);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0) brightness(1);
+  }
+}
+
+/* Mobile : image plus haute, mais toujours fondue. */
+@media (max-width: 760px) {
+  .tellium-scene::after {
+    height: min(47vh, 420px);
+    background-size: auto 100%;
+    background-position: center bottom;
+
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgba(0,0,0,.03) 10%,
+      rgba(0,0,0,.28) 24%,
+      rgba(0,0,0,.78) 42%,
+      #000 58%,
+      #000 100%
+    );
+
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgba(0,0,0,.03) 10%,
+      rgba(0,0,0,.28) 24%,
+      rgba(0,0,0,.78) 42%,
+      #000 58%,
+      #000 100%
+    );
+  }
+
+  /*
+   * Supprime toute ancienne image ou ancienne ligne
+   * encore présente sous forme de décor mobile.
+   */
+  .rising-earth,
+  .scene-home .rising-earth,
+  .scene-revealing .rising-earth {
+    display: none !important;
+    background: none !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .scene-revealing::before {
+    inset: -8%;
+    background-size:
+      19px 19px,
+      27px 27px,
+      34px 34px,
+      41px 41px,
+      55px 55px;
+  }
+}
+
+/* Respect du réglage d’accessibilité du visiteur. */
+@media (prefers-reduced-motion: reduce) {
+  .scene-revealing::before,
+  .scene-revealing .home-orb,
+  .scene-revealing .home-orb::after,
+  .scene-revealing .tellium-canvas {
+    animation-duration: .4s !important;
+  }
+}
