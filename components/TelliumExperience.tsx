@@ -122,8 +122,8 @@ export default function TelliumExperience() {
      * On effectue seulement un fondu croisé et le compteur
      * descend vers sa position définitive.
      */
-    window.setTimeout(() => engine?.replaySelfArrival(), 760);
-    window.setTimeout(() => setScene("artwork"), 1550);
+    window.setTimeout(() => engine?.replaySelfArrival(), 1320);
+    window.setTimeout(() => setScene("artwork"), 1760);
   };
 
   const revealArtwork = () => {
