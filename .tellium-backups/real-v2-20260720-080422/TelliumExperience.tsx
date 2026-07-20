@@ -364,11 +364,6 @@ export default function TelliumExperience({
     [lastLightAt],
   );
 
-  const nextRegistryNumber = Math.max(1, stats.total + 1);
-  const earthBrightnessPercent = Math.round(
-    telliumLife.brightness * 100,
-  );
-
   const selfCard: SelfCardInfo | null = selfPos
     ? {
         x: selfPos.x,
@@ -456,28 +451,6 @@ export default function TelliumExperience({
           )}
 
           <div className="artwork-bottom hud">
-            <div className="v2-earth-status">
-              <div className="v2-earth-status-copy">
-                <span>EARTH LIGHT</span>
-                <strong>{earthBrightnessPercent}%</strong>
-              </div>
-
-              <div
-                className="v2-earth-light-meter"
-                aria-label={`Earth light ${earthBrightnessPercent}%`}
-              >
-                <i
-                  style={{
-                    width: `${earthBrightnessPercent}%`,
-                  }}
-                />
-              </div>
-
-              <small>
-                {getTelliumStatusLabel(telliumLife.status)}
-              </small>
-            </div>
-
             <div className="artwork-counter-label">Humans connected now</div>
             <LedCounter target={stats.total} variant="mini" />
             <div className="artwork-meta">{stats.countries} countries · {stats.cities} cities</div>
@@ -507,55 +480,14 @@ export default function TelliumExperience({
           <section className="tellium-dialog profile-dialog" role="dialog" aria-modal="true" onMouseDown={(e) => e.stopPropagation()}>
             <button className="dialog-close" onClick={() => setProfileOpen(false)}>×</button>
             <div className="dialog-star">✦</div>
-            <p className="dialog-kicker">The permanent register of human lights</p>
-            <h2>Register your light</h2>
-            <p>
-              Your light will be added to Tellium, linked to this exact
-              place and moment, then sent into the living constellation.
-            </p>
-
-            <div className="v2-register-card">
-              <div>
-                <span>LIGHT NUMBER</span>
-                <strong>#{String(nextRegistryNumber).padStart(6, "0")}</strong>
-              </div>
-
-              <div>
-                <span>LOCATION</span>
-                <strong>{SELF_CITY} · FRANCE</strong>
-              </div>
-
-              <div>
-                <span>REGISTERED</span>
-                <strong>{clock.date} · {clock.utc}</strong>
-              </div>
+            <p className="dialog-kicker">You are about to join the living artwork</p>
+            <h2>How should your light appear?</h2>
+            <p>Add a first name or nickname for the arrival ticker, or remain completely anonymous.</p>
+            <input className="profile-name" value={profileDraft} onChange={(e) => setProfileDraft(e.target.value)} placeholder="First name or nickname (optional)" maxLength={24} autoFocus />
+            <div className="capture-actions profile-actions">
+              <button onClick={continueAnonymous}>Continue anonymously</button>
+              <button className="primary" onClick={saveProfile}>Light up the world</button>
             </div>
-
-            <label className="v2-register-name">
-              <span>NAME OR PSEUDONYM · OPTIONAL</span>
-              <input
-                className="profile-name"
-                value={profileDraft}
-                onChange={(e) => setProfileDraft(e.target.value)}
-                placeholder="Leave empty to register anonymously"
-                maxLength={24}
-                autoFocus
-              />
-            </label>
-
-            <div className="capture-actions profile-actions v2-register-actions">
-              <button onClick={continueAnonymous}>
-                Register anonymously
-              </button>
-
-              <button className="primary" onClick={saveProfile}>
-                Register my light
-              </button>
-            </div>
-
-            <small className="v2-register-note">
-              Every registered light becomes a permanent part of the artwork.
-            </small>
           </section>
         </div>
       )}

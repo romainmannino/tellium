@@ -11,11 +11,6 @@ import CountryTooltip from "./CountryTooltip";
 import MapControls from "./MapControls";
 import SelfCard, { type SelfCardInfo } from "./SelfCard";
 import ConstellationQr from "@/components/ConstellationQr";
-import TelliumConstellation from "@/components/TelliumConstellation";
-import {
-  getTelliumLifeState,
-  getTelliumStatusLabel,
-} from "@/lib/telliumLife";
 
 type Toast = { id: number; html: string; kind: "default" | "friend" };
 type Scene = "home" | "revealing" | "artwork";
@@ -61,8 +56,6 @@ export default function TelliumExperience({
   const [profile, setProfile] = useState<LightProfile>({ firstName: "" });
   const [profileDraft, setProfileDraft] = useState("");
   const [tickerItems, setTickerItems] = useState<string[]>([]);
-  const [lastLightAt, setLastLightAt] = useState<string | null>(null);
-  const [constellationLaunchId, setConstellationLaunchId] = useState(0);
 
   const arrivedAtRef = useRef<number>(0);
   const invitesRef = useRef<number>(0);
@@ -83,11 +76,7 @@ export default function TelliumExperience({
 
     engine.mount(canvasRef.current!, source, {
       onStats: setStats,
-      onToast: (html, kind) => {
-        setLastLightAt(new Date().toISOString());
-        setConstellationLaunchId((value) => value + 1);
-        pushToast(html, kind);
-      },
+      onToast: (html, kind) => pushToast(html, kind),
       onHover: setHover,
       onSelfClick: (x, y) => setSelfPos({ x, y }),
     });
@@ -116,8 +105,6 @@ export default function TelliumExperience({
     const welcome = window.setTimeout(() => {
       source.registerSelf();
       arrivedAtRef.current = Date.now();
-      setLastLightAt(new Date().toISOString());
-      setConstellationLaunchId((value) => value + 1);
       setSelfReady(true);
       setHomeArrivalPulse(true);
       window.setTimeout(() => setHomeArrivalPulse(false), 1800);
@@ -359,16 +346,6 @@ export default function TelliumExperience({
     startRevealArtwork();
   };
 
-  const telliumLife = useMemo(
-    () => getTelliumLifeState(lastLightAt),
-    [lastLightAt],
-  );
-
-  const nextRegistryNumber = Math.max(1, stats.total + 1);
-  const earthBrightnessPercent = Math.round(
-    telliumLife.brightness * 100,
-  );
-
   const selfCard: SelfCardInfo | null = selfPos
     ? {
         x: selfPos.x,
@@ -384,20 +361,10 @@ export default function TelliumExperience({
   const isArtwork = scene === "artwork";
 
   return (
-    <main
-      className={`fixed inset-0 tellium-scene scene-${scene} tellium-life-${telliumLife.status}${galleryMode ? " gallery" : ""}`}
-      data-life-status={telliumLife.status}
-      data-life-brightness={telliumLife.brightness.toFixed(2)}
-    >
+    <main className={`fixed inset-0 tellium-scene scene-${scene}${galleryMode ? " gallery" : ""}`}>
       <canvas ref={canvasRef} className="tellium-canvas block h-full w-full" />
       <div className="space-veil" aria-hidden />
       <div className="cosmic-blue" aria-hidden />
-
-      <TelliumConstellation
-        totalLights={stats.total}
-        launchId={constellationLaunchId}
-        active={scene !== "home"}
-      />
 
       <div className="persistent-clock">
         <span className="clock-icon">◷</span>
@@ -427,10 +394,7 @@ export default function TelliumExperience({
         </div>
       </section>
 
-      <div className="rising-earth" aria-hidden>
-        <div className="tellium-life-aura" />
-        <div className="tellium-life-pulse" />
-      </div>
+      <div className="rising-earth" aria-hidden />
 
 
 
@@ -456,41 +420,9 @@ export default function TelliumExperience({
           )}
 
           <div className="artwork-bottom hud">
-            <div className="v2-earth-status">
-              <div className="v2-earth-status-copy">
-                <span>EARTH LIGHT</span>
-                <strong>{earthBrightnessPercent}%</strong>
-              </div>
-
-              <div
-                className="v2-earth-light-meter"
-                aria-label={`Earth light ${earthBrightnessPercent}%`}
-              >
-                <i
-                  style={{
-                    width: `${earthBrightnessPercent}%`,
-                  }}
-                />
-              </div>
-
-              <small>
-                {getTelliumStatusLabel(telliumLife.status)}
-              </small>
-            </div>
-
             <div className="artwork-counter-label">Humans connected now</div>
             <LedCounter target={stats.total} variant="mini" />
             <div className="artwork-meta">{stats.countries} countries · {stats.cities} cities</div>
-
-            <div
-              className="tellium-life-indicator"
-              aria-live="polite"
-              title={`Earth brightness: ${Math.round(telliumLife.brightness * 100)}%`}
-            >
-              <span className="tellium-life-dot" aria-hidden />
-              <span>{getTelliumStatusLabel(telliumLife.status)}</span>
-            </div>
-
             <div className="life-ticker" aria-label="Recent Tellium arrivals">
               <div className="life-ticker-track">
                 {[...tickerItems, ...tickerItems].map((item, index) => (
@@ -507,55 +439,14 @@ export default function TelliumExperience({
           <section className="tellium-dialog profile-dialog" role="dialog" aria-modal="true" onMouseDown={(e) => e.stopPropagation()}>
             <button className="dialog-close" onClick={() => setProfileOpen(false)}>×</button>
             <div className="dialog-star">✦</div>
-            <p className="dialog-kicker">The permanent register of human lights</p>
-            <h2>Register your light</h2>
-            <p>
-              Your light will be added to Tellium, linked to this exact
-              place and moment, then sent into the living constellation.
-            </p>
-
-            <div className="v2-register-card">
-              <div>
-                <span>LIGHT NUMBER</span>
-                <strong>#{String(nextRegistryNumber).padStart(6, "0")}</strong>
-              </div>
-
-              <div>
-                <span>LOCATION</span>
-                <strong>{SELF_CITY} · FRANCE</strong>
-              </div>
-
-              <div>
-                <span>REGISTERED</span>
-                <strong>{clock.date} · {clock.utc}</strong>
-              </div>
+            <p className="dialog-kicker">You are about to join the living artwork</p>
+            <h2>How should your light appear?</h2>
+            <p>Add a first name or nickname for the arrival ticker, or remain completely anonymous.</p>
+            <input className="profile-name" value={profileDraft} onChange={(e) => setProfileDraft(e.target.value)} placeholder="First name or nickname (optional)" maxLength={24} autoFocus />
+            <div className="capture-actions profile-actions">
+              <button onClick={continueAnonymous}>Continue anonymously</button>
+              <button className="primary" onClick={saveProfile}>Light up the world</button>
             </div>
-
-            <label className="v2-register-name">
-              <span>NAME OR PSEUDONYM · OPTIONAL</span>
-              <input
-                className="profile-name"
-                value={profileDraft}
-                onChange={(e) => setProfileDraft(e.target.value)}
-                placeholder="Leave empty to register anonymously"
-                maxLength={24}
-                autoFocus
-              />
-            </label>
-
-            <div className="capture-actions profile-actions v2-register-actions">
-              <button onClick={continueAnonymous}>
-                Register anonymously
-              </button>
-
-              <button className="primary" onClick={saveProfile}>
-                Register my light
-              </button>
-            </div>
-
-            <small className="v2-register-note">
-              Every registered light becomes a permanent part of the artwork.
-            </small>
           </section>
         </div>
       )}
